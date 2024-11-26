@@ -15,7 +15,7 @@ namespace SOMIOD.Models
         private DateTime creation_datetime { get; set; }
         private int parent {  get; set; }
 
-        private string @event { get; set; }
+        private int @event { get; set; }
 
         private string endpoint { get; set; }
         private bool enabled { get; set; }
