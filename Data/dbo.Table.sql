@@ -15,9 +15,11 @@ CREATE TABLE [dbo].[Notification]
     [parent] INT NOT NULL, 
     [event] INT NOT NULL, 
     [endpoint] VARCHAR(50) NOT NULL, 
-    [enabled] BIT NOT NULL DEFAULT 0,
+    [enabled] BIT NOT NULL DEFAULT 0, 
+    CONSTRAINT [FK_Notification_ToContainer] FOREIGN KEY ([parent]) REFERENCES [Container]([id]),
 
 )
+
 
 
 CREATE TABLE [dbo].[Record]
@@ -26,9 +28,10 @@ CREATE TABLE [dbo].[Record]
     [name] VARCHAR(50) NOT NULL, 
     [content] VARCHAR(50) NOT NULL,
 	[creation_datetime] DATETIME2 NOT NULL DEFAULT GETDATE(), 
-    [parent] INT NOT NULL,
-
+    [parent] INT NOT NULL, 
+    CONSTRAINT [FK_Record_ToContainer] FOREIGN KEY ([parent]) REFERENCES [Container]([id]),
 )
+
 
 
 CREATE TABLE [dbo].[Application] (
