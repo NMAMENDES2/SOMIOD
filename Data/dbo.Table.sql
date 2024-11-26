@@ -34,11 +34,15 @@ CREATE TABLE [dbo].[Record]
 
 
 
-CREATE TABLE [dbo].[Application] (
+CREATE TABLE [dbo].[Container] (
     [Id]                INT           NOT NULL,
     [name]              VARCHAR (50)  NOT NULL,
     [creation_datetime] DATETIME2 (7) DEFAULT (getdate()) NOT NULL,
-    PRIMARY KEY CLUSTERED ([Id] ASC)
+    [parent]            INT           NOT NULL,
+    PRIMARY KEY CLUSTERED ([Id] ASC), 
+    CONSTRAINT [FK_Container_ToAplication] FOREIGN KEY ([parent]) REFERENCES [Application]([id]),
 );
+
+
 
 
