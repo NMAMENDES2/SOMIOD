@@ -2,7 +2,7 @@ CREATE TABLE [dbo].[Container]
 (
 	[Id] INT NOT NULL PRIMARY KEY, 
     [name] VARCHAR(50) NOT NULL, 
-    [creation_datetime] TIMESTAMP NOT NULL DEFAULT GETDATE(), 
+    [creation_datetime] DATETIME2 NOT NULL DEFAULT GETDATE(), 
     [parent] INT NOT NULL
 )
 
