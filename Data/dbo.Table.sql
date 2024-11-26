@@ -14,7 +14,7 @@ CREATE TABLE [dbo].[Notification]
 	[creation_datetime] DATETIME2 NOT NULL DEFAULT GETDATE(), 
     [parent] INT NOT NULL, 
     [event] INT NOT NULL, 
-    [endpoint] VARCHAR(50) NOT NULL, 
+    [endpoint] VARCHAR(255) NOT NULL, 
     [enabled] BIT NOT NULL DEFAULT 0, 
     CONSTRAINT [FK_Notification_ToContainer] FOREIGN KEY ([parent]) REFERENCES [Container]([id]),
 
