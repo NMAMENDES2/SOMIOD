@@ -8,10 +8,10 @@ namespace SOMIOD.Models
 {
     public class Container
     {
-        private int id { get; set; }
-        private string name { get; set; }
-        private String content { get; set; }
-        private DateTime creation_datetime { get; set; }
-        private int parent {  get; set; }
+        public int id { get; set; }
+        public string name { get; set; }
+        public String content { get; set; }
+        public DateTime creation_datetime { get; set; }
+        public int parent {  get; set; }
     }
 }

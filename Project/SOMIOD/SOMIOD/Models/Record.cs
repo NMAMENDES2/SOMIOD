@@ -7,12 +7,12 @@ namespace SOMIOD.Models
 {
     public class Record
     {
-        private int id { get; set; }
-        private string name { get; set; }
-        private string content { get; set; }
+        public int id { get; set; }
+        public string name { get; set; }
+        public string content { get; set; }
 
-        private DateTime creation_datetime { get; set; }
-        private int parent {  get; set; }
+        public DateTime creation_datetime { get; set; }
+        public int parent {  get; set; }
         
     }
 }

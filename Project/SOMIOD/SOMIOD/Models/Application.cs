@@ -8,9 +8,9 @@ namespace SOMIOD.Models
 {
     public class Application
     {
-        private int id { get; set; }
-        private string name { get; set; }
-        private DateTime creation_datetime { get; set; }
+        public int id { get; set; }
+        public string name { get; set; }
+        public DateTime creation_datetime { get; set; }
 
 
     }
