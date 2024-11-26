@@ -7,7 +7,20 @@ using System.Web.Http;
 
 namespace SOMIOD.Controllers
 {
+
     public class ContainerController : ApiController
     {
+
+        string connStr = Properties.Settings.Default.ConString;
+
+
+        
+
+        [Route("api/somiod/containers")]
+        [HttpGet]
+        public List<Container> GetAllContainers()
+        {
+            List <Container> = new List<Container>;
+        }
     }
 }
