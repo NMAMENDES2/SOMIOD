@@ -32,7 +32,7 @@ namespace SOMIOD.Controllers
             HttpResponseMessage response;
             var headers = HttpContext.Current.Request.Headers;
 
-            string somiodDiscover = headers.Get("somiod-discover"); // Meter somiod-discover nos headers no postman com value application
+            string somiodDiscover = headers.Get("somiod-locate"); // Meter somiod-discover nos headers no postman com value application
 
             // Fetch db
             if (somiodDiscover == "application")
