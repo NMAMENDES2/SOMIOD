@@ -49,6 +49,7 @@ namespace SOMIOD.Controllers
                         app.name = (string)registos["name"];
                         apps.Add(app);
                     }
+
                 }
             }
             // Cria um xml, dá-lhe declaração e cria os nodes
@@ -72,6 +73,6 @@ namespace SOMIOD.Controllers
 
             return response;
         }
-      
+
     }
 }

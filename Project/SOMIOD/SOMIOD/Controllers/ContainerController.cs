@@ -30,6 +30,7 @@ namespace SOMIOD.Controllers
             Application app = new Application();
             var conts = new List<Container>();
             var recs = new List<Record>();
+            var apps = new List<Application>();
 
             var headers = HttpContext.Current.Request.Headers;
 
@@ -40,11 +41,6 @@ namespace SOMIOD.Controllers
             doc.AppendChild(dec);
             XmlElement root = doc.CreateElement("response");
             doc.AppendChild(root);
-            XmlElement appxml = doc.CreateElement("application");
-            root.AppendChild(appxml);
-            XmlElement nameapp = doc.CreateElement("name");
-            nameapp.InnerText = application;
-            appxml.AppendChild(nameapp);
 
             using (SqlConnection connection = new SqlConnection(connStr))
             {
@@ -57,6 +53,9 @@ namespace SOMIOD.Controllers
                 while (registos.Read())
                 {
                     app.id = (int)registos["Id"];
+                    app.name = (string)registos["name"];
+                    app.creation_datetime = (DateTime)registos["creation_datetime"];
+                    apps.Add(app);
                     rowCount++;
                 }
 
@@ -92,7 +91,7 @@ namespace SOMIOD.Controllers
                     XmlElement namecont = doc.CreateElement("name");
                     namecont.InnerText = cont.name;
                     container.AppendChild(namecont);
-                    appxml.AppendChild(container);
+                    root.AppendChild(container);
                 }
             }
 
@@ -119,7 +118,24 @@ namespace SOMIOD.Controllers
                     XmlElement nameRecord = doc.CreateElement("name");
                     nameRecord.InnerText = rec.name;
                     record.AppendChild(nameRecord);
-                    appxml.AppendChild(record);
+                    root.AppendChild(record);
+                }
+            }
+
+            if (somiodDiscover == null)
+            {
+                foreach (Application appaux in apps)
+                {
+                    XmlElement id = doc.CreateElement("id");
+                    id.InnerText = app.id.ToString();
+                    XmlElement name = doc.CreateElement("name");
+                    name.InnerText = app.name;
+                    XmlElement creation_datetime = doc.CreateElement("creation_date");
+                    creation_datetime.InnerText = app.creation_datetime.ToString("o");
+                    root.AppendChild(id);
+                    root.AppendChild(name);
+                    root.AppendChild(creation_datetime);  // tem de haver forma para isto n tar tão hard coded sque
+
                 }
             }
 
