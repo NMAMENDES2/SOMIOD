@@ -34,7 +34,7 @@ namespace SOMIOD.Controllers
 
             var headers = HttpContext.Current.Request.Headers;
 
-            string somiodDiscover = headers.Get("somiod-locate"); // Meter somiod-discover nos headers no postman com value application
+            string somiodLocate = headers.Get("somiod-locate"); // Meter somiod-discover nos headers no postman com value application
 
             XmlDocument doc = new XmlDocument();
             XmlDeclaration dec = doc.CreateXmlDeclaration("1.0", null, null);
@@ -67,7 +67,7 @@ namespace SOMIOD.Controllers
                 }
             }
 
-            if (somiodDiscover == "container")
+            if (somiodLocate == "container")
             {
 
                 using (SqlConnection connection = new SqlConnection(connStr))
@@ -95,7 +95,7 @@ namespace SOMIOD.Controllers
                 }
             }
 
-            if (somiodDiscover == "record")
+            if (somiodLocate == "record")
             {
                 using (SqlConnection connection = new SqlConnection(connStr))
                 {
@@ -122,7 +122,7 @@ namespace SOMIOD.Controllers
                 }
             }
 
-            if (somiodDiscover == null)
+            if (somiodLocate == null)
             {
                 foreach (Application appaux in apps)
                 {

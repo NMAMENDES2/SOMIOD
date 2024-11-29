@@ -22,7 +22,7 @@ namespace SOMIOD.Controllers
     {
         string connstr = Properties.Settings.Default.ConString;
 
-        [Route("create")]
+        [Route("")] // Se não fizermos / dps dá conflito com os do containerController
         [HttpPost]
         public HttpResponseMessage Create(HttpRequestMessage entity)
         {
@@ -57,7 +57,7 @@ namespace SOMIOD.Controllers
         }
 
 
-        [Route("getAll")]
+        [Route("")] // acho que n é preciso dizer getAll?
         [HttpGet]
         // Terceiro endpoints dado no enunciado localhost/api/somiod
         public HttpResponseMessage GetAll() // Não dá com HTTPActionResult tem de ser assim
@@ -67,10 +67,10 @@ namespace SOMIOD.Controllers
             try
             {
                 var headers = HttpContext.Current.Request.Headers;
-                string somiodDiscover = headers.Get("somiod-discover"); // Meter somiod-discover nos headers no postman com value application
+                string somiodLocate = headers.Get("somiod-locate"); // Meter somiod-discover nos headers no postman com value application
 
                 // Fetch db
-                if (somiodDiscover == "application")
+                if (somiodLocate == "application")
                 {
                     using (SqlConnection connection = new SqlConnection(connstr))
                     {
@@ -174,17 +174,20 @@ namespace SOMIOD.Controllers
                     Application application = (Application)serializer.Deserialize(reader);
 
                     // Verifica se o ID do objeto Application corresponde ao ID da URL
+                    /*
                     if (application.id != id)
                     {
                         return Request.CreateResponse(HttpStatusCode.BadRequest, "ID mismatch.");
                     }
+
+                    */
 
                     using (SqlConnection connection = new SqlConnection(connstr))
                     {
                         connection.Open();
 
                         // Atualiza os dados na tabela Application
-                        string query = "UPDATE Application SET name = @name WHERE id = @id";
+                        string query = "UPDATE Application SET name = @name WHERE Id = @id";
                         SqlCommand cmd = new SqlCommand(query, connection);
                         cmd.Parameters.AddWithValue("@name", application.name);
                         cmd.Parameters.AddWithValue("@id", application.id);
