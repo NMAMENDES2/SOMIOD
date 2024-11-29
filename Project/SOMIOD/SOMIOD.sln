@@ -5,6 +5,8 @@ VisualStudioVersion = 17.11.35303.130
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SOMIOD", "SOMIOD\SOMIOD.csproj", "{9055E5D7-0859-464F-8D8A-D114AD06B846}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApplicationManagement", "ApplicationManagement\ApplicationManagement.csproj", "{B73A62B5-39F1-4E1C-AD9D-5804E3DFB814}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{9055E5D7-0859-464F-8D8A-D114AD06B846}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9055E5D7-0859-464F-8D8A-D114AD06B846}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9055E5D7-0859-464F-8D8A-D114AD06B846}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B73A62B5-39F1-4E1C-AD9D-5804E3DFB814}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B73A62B5-39F1-4E1C-AD9D-5804E3DFB814}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B73A62B5-39F1-4E1C-AD9D-5804E3DFB814}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B73A62B5-39F1-4E1C-AD9D-5804E3DFB814}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
