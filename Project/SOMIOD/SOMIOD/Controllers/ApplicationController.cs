@@ -22,7 +22,9 @@ namespace SOMIOD.Controllers
     {
         string connstr = Properties.Settings.Default.ConString;
 
-        [Route("")] // Se não fizermos / dps dá conflito com os do containerController
+        #region CRUD's
+
+        [Route("create")]
         [HttpPost]
         public HttpResponseMessage Create(HttpRequestMessage entity)
         {
@@ -30,12 +32,13 @@ namespace SOMIOD.Controllers
 
             try
             {
+                // usa o XmlSerializer para desserializar o XML para um objeto Application
                 var serializer = new XmlSerializer(typeof(Application));
 
                 // Usando StringReader para ler a string XML
                 using (StringReader reader = new StringReader(content))
                 {
-                    // Desserializa o XML para o objeto Application
+                    // desserializa o XML para o objeto Application
                     Application application = (Application)serializer.Deserialize(reader);
 
                     using (SqlConnection connection = new SqlConnection(connstr))
@@ -57,7 +60,7 @@ namespace SOMIOD.Controllers
         }
 
 
-        [Route("")] // acho que n é preciso dizer getAll?
+        [Route("getAll")]
         [HttpGet]
         // Terceiro endpoints dado no enunciado localhost/api/somiod
         public HttpResponseMessage GetAll() // Não dá com HTTPActionResult tem de ser assim
@@ -83,42 +86,22 @@ namespace SOMIOD.Controllers
                             Application app = new Application
                             {
                                 id = (int)registos["id"],
-                                name = (string)registos["name"]
+                                name = (string)registos["name"],
+                                creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"]
                             };
                             apps.Add(app);
                         }
                     }
                 }
 
-                // Cria um xml, dá-lhe declaração e cria os nodes
-                XmlDocument doc = new XmlDocument();
-                XmlDeclaration dec = doc.CreateXmlDeclaration("1.0", null, null);
-                doc.AppendChild(dec);
-                XmlElement root = doc.CreateElement("response");
-                doc.AppendChild(root);
-
-                foreach (Application app in apps)
-                {
-                    XmlElement applic = doc.CreateElement("application");
-                    XmlElement id = doc.CreateElement("id");
-                    id.InnerText = app.id.ToString();
-                    XmlElement name = doc.CreateElement("name");
-                    name.InnerText = app.name;
-                    applic.AppendChild(id);
-                    applic.AppendChild(name);
-                    root.AppendChild(applic);
-                }
-
-                string xmlContent = doc.OuterXml;
-                var response = Request.CreateResponse(HttpStatusCode.OK);
-                response.Content = new StringContent(xmlContent, Encoding.UTF8, "application/xml");
-                return response;
+                return Request.CreateResponse(HttpStatusCode.OK, apps);
             }
             catch (Exception ex)
             {
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
+
 
         [Route("get/{id}")]
         [HttpGet]
@@ -138,6 +121,7 @@ namespace SOMIOD.Controllers
                     {
                         app = new Application
                         {
+                            id = (int)registos["id"],
                             name = (string)registos["name"]
                         };
                     }
@@ -155,6 +139,7 @@ namespace SOMIOD.Controllers
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
+
 
         [Route("update/{id}")]
         [HttpPut]
@@ -190,7 +175,7 @@ namespace SOMIOD.Controllers
                         string query = "UPDATE Application SET name = @name WHERE Id = @id";
                         SqlCommand cmd = new SqlCommand(query, connection);
                         cmd.Parameters.AddWithValue("@name", application.name);
-                        cmd.Parameters.AddWithValue("@id", application.id);
+                        cmd.Parameters.AddWithValue("@id", id);
 
                         int rowsAffected = cmd.ExecuteNonQuery();
 
@@ -238,5 +223,7 @@ namespace SOMIOD.Controllers
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
+
+        #endregion
     }
 }
