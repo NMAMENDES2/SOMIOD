@@ -13,7 +13,7 @@ using SOMIOD.Models;
 
 namespace SOMIOD.Controllers
 {
-    [RoutePrefix("api/somiod/container")]
+    [RoutePrefix("api/somiod/containers")]
     public class ContainerController : ApiController
     {
         string connstr = Properties.Settings.Default.ConString;
@@ -52,7 +52,7 @@ namespace SOMIOD.Controllers
             }
         }
 
-        [Route("getAll")]
+        [Route("/")]
         [HttpGet]
         public HttpResponseMessage GetAll()
         {
@@ -116,7 +116,7 @@ namespace SOMIOD.Controllers
             }
         }
 
-        [Route("get/{id}")]
+        [Route("get/{id}")] // devia ser {id}?
         [HttpGet]
         public HttpResponseMessage Get(int id)
         {
