@@ -43,6 +43,7 @@
             this.buttonON.TabIndex = 0;
             this.buttonON.Text = "Light ON";
             this.buttonON.UseVisualStyleBackColor = true;
+            this.buttonON.Click += new System.EventHandler(this.buttonON_Click);
             // 
             // buttonOff
             // 
@@ -55,6 +56,7 @@
             this.buttonOff.TabIndex = 1;
             this.buttonOff.Text = "Light OFF";
             this.buttonOff.UseVisualStyleBackColor = true;
+            this.buttonOff.Click += new System.EventHandler(this.buttonOff_Click);
             // 
             // App_B
             // 
@@ -65,6 +67,8 @@
             this.Controls.Add(this.buttonON);
             this.Name = "App_B";
             this.Text = "App_B";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.App_B_FormClosing);
+            this.Load += new System.EventHandler(this.App_B_Load);
             this.ResumeLayout(false);
 
         }

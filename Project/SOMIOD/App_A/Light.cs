@@ -23,7 +23,7 @@ namespace App_A
         string[] topics = { "light_bulb" };
         byte[] qosLevels = { MqttMsgBase.QOS_LEVEL_EXACTLY_ONCE };
 
-        string baseURI = @"http://localhost:57806/api/somiod";
+        string url = @"http://localhost:57806/api/somiod/";
         RestClient client = null;
 
         public App_A()
@@ -35,7 +35,7 @@ namespace App_A
         {
             pictureBox1.Image = Properties.Resources.off;
 
-            createOpertion();
+            //createOpertion();
 
             try
             {
@@ -60,7 +60,7 @@ namespace App_A
 
         private void createOpertion()
         {
-            client = new RestClient(baseURI);
+            client = new RestClient(url);
 
             Application application = new Application()
             {
@@ -73,7 +73,7 @@ namespace App_A
                 parent = 10,
             };
 
-            var appRequest = new RestRequest("/create", Method.Post);
+            var appRequest = new RestRequest("", Method.Post);
             appRequest.RequestFormat = DataFormat.Xml;
             appRequest.AddXmlBody(application);
             var responseApp = client.Execute(appRequest);
