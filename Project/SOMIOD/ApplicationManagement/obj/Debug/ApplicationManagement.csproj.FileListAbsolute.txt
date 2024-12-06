@@ -78,3 +78,10 @@ C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\Applicat.12126BD2.Up2Date
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.exe
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.pdb
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.csproj.AssemblyReference.cache
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.Form1.resources
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.Properties.Resources.resources
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.csproj.GenerateResource.cache
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.csproj.CoreCompileInputs.cache
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.exe
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.pdb

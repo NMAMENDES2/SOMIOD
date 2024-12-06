@@ -7,12 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using uPLibrary.Networking.M2Mqtt;
 
 namespace App_A
 {
     public partial class App_A : Form
     {
         private bool isOn = false;
+        MqttClient mqttClient;
 
         public App_A()
         {

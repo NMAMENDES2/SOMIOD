@@ -199,5 +199,77 @@ C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.cs
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.csproj.Up2Date
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.dll
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.pdb
+<<<<<<< HEAD
 E:\Faculdade\SOMIOD\Project\SOMIOD\SOMIOD\bin\M2Mqtt.Net.dll
 E:\Faculdade\SOMIOD\Project\SOMIOD\SOMIOD\bin\M2Mqtt.Net.pdb
+=======
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\SOMIOD.dll.config
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\SOMIOD.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\SOMIOD.pdb
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\csc.exe
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\csc.exe.config
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\csc.rsp
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\csi.exe
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\csi.exe.config
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\csi.rsp
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.Build.Tasks.CodeAnalysis.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.CodeAnalysis.CSharp.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.CodeAnalysis.CSharp.Scripting.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.CodeAnalysis.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.CodeAnalysis.Scripting.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.CodeAnalysis.VisualBasic.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.CSharp.Core.targets
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.DiaSymReader.Native.amd64.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.DiaSymReader.Native.x86.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.Managed.Core.targets
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.VisualBasic.Core.targets
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\Microsoft.Win32.Primitives.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.AppContext.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Collections.Immutable.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Console.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Diagnostics.DiagnosticSource.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Diagnostics.FileVersionInfo.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Diagnostics.StackTrace.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Globalization.Calendars.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.IO.Compression.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.IO.Compression.ZipFile.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.IO.FileSystem.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.IO.FileSystem.Primitives.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Net.Http.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Net.Sockets.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Reflection.Metadata.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Runtime.InteropServices.RuntimeInformation.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Security.Cryptography.Algorithms.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Security.Cryptography.Encoding.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Security.Cryptography.Primitives.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Security.Cryptography.X509Certificates.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Text.Encoding.CodePages.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Threading.Tasks.Extensions.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.ValueTuple.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Xml.ReaderWriter.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Xml.XmlDocument.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Xml.XPath.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\System.Xml.XPath.XDocument.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\vbc.exe
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\vbc.exe.config
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\vbc.rsp
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\VBCSCompiler.exe
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\roslyn\VBCSCompiler.exe.config
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\M2Mqtt.Net.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\Newtonsoft.Json.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\System.Net.Http.Formatting.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\System.Web.Http.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\System.Web.Http.WebHost.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\M2Mqtt.Net.pdb
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\Newtonsoft.Json.xml
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\System.Net.Http.Formatting.xml
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\System.Web.Http.xml
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\System.Web.Http.WebHost.xml
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.csproj.AssemblyReference.cache
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.csproj.CoreCompileInputs.cache
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.csproj.Up2Date
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.dll
+C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.pdb
+>>>>>>> 98fd6e0d94ff3624d513fefddd2d1591fd9f3578
