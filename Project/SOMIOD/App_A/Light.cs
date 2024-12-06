@@ -35,7 +35,7 @@ namespace App_A
         {
             pictureBox1.Image = Properties.Resources.off;
 
-            //createOpertion();
+            createOpertion();
 
             try
             {
@@ -62,36 +62,38 @@ namespace App_A
         {
             client = new RestClient(url);
 
-            Application application = new Application()
-            {
-                name = "Lighting",
-            };
-
-            Container container = new Container()
-            {
-                name = "light_bulb",
-                parent = 10,
-            };
+            string rawXml = @"<request>
+                                <name>Lighting</name> 
+                                <res_type>application</res_type> 
+                              </request>";
 
             var appRequest = new RestRequest("", Method.Post);
-            appRequest.RequestFormat = DataFormat.Xml;
-            appRequest.AddXmlBody(application);
-            var responseApp = client.Execute(appRequest);
+            appRequest.AddHeader("Content-Type", "application/xml");
+            appRequest.AddParameter("application/xml", rawXml, ParameterType.RequestBody);
 
-            var contRequest = new RestRequest("/create", Method.Post);
-            contRequest.RequestFormat = DataFormat.Xml;
-            contRequest.AddXmlBody(container);
-            var responseCont = client.Execute(contRequest);
+            var responseApp = client.Execute(appRequest);
 
             if (responseApp.StatusCode != HttpStatusCode.OK)
             {
                 MessageBox.Show($"Failed to create application: {responseApp.StatusDescription}");
             }
 
+            rawXml = @"<request> 
+                        <name>light_bulb</name>
+                        <res_type>container</res_type> 
+                    </request>";
+
+            var contRequest = new RestRequest("/Lighting", Method.Post);
+            contRequest.AddHeader("Content-Type", "container/xml");
+            contRequest.AddParameter("container/xml", rawXml, ParameterType.RequestBody);
+
+            var responseCont = client.Execute(contRequest);
+
             if (responseCont.StatusCode != HttpStatusCode.OK)
             {
                 MessageBox.Show($"Failed to create container: {responseCont.StatusDescription}");
             }
+            
         }
 
         private void MqttClient_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
@@ -121,24 +123,17 @@ namespace App_A
 
         private void App_A_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (mqttClient != null && mqttClient.IsConnected)
+            try
             {
-                mqttClient.Disconnect();
+                if (mqttClient != null && mqttClient.IsConnected)
+                {
+                    mqttClient.Disconnect();
+                }
             }
-        }
-
-        public class Application
-        {
-            [XmlElement("name")]
-            public string name { get; set; }
-        }
-
-        public class Container
-        {
-            [XmlElement("name")]
-            public string name { get; set; }
-            [XmlElement("parent")]
-            public int parent { get; set; }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error during MQTT disconnection: {ex.Message}");
+            }
         }
     }
 }
