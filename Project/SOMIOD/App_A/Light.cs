@@ -73,10 +73,10 @@ namespace App_A
 
             var responseApp = client.Execute(appRequest);
 
-            if (responseApp.StatusCode != HttpStatusCode.OK)
+            /*if (responseApp.StatusCode != HttpStatusCode.BadRequest && responseApp.StatusCode != HttpStatusCode.OK)
             {
                 MessageBox.Show($"Failed to create application: {responseApp.StatusDescription}");
-            }
+            }*/
 
             rawXml = @"<request> 
                         <name>light_bulb</name>
@@ -89,11 +89,10 @@ namespace App_A
 
             var responseCont = client.Execute(contRequest);
 
-            if (responseCont.StatusCode != HttpStatusCode.OK)
+            /*if (responseCont.StatusCode != HttpStatusCode.BadRequest && responseCont.StatusCode != HttpStatusCode.OK)
             {
-                MessageBox.Show($"Failed to create container: {responseCont.StatusDescription}");
-            }
-            
+                MessageBox.Show($"Failed to create application: {responseCont.StatusDescription}");
+            }*/
         }
 
         private void MqttClient_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)

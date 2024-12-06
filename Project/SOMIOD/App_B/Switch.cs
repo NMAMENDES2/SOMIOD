@@ -65,10 +65,10 @@ namespace App_B
 
             var responseApp = client.Execute(appRequest);
 
-            if (responseApp.StatusCode != HttpStatusCode.OK)
+            /*if (responseApp.StatusCode != HttpStatusCode.OK && responseApp.StatusCode != HttpStatusCode.BadRequest)
             {
                 MessageBox.Show($"Failed to create application: {responseApp.StatusDescription}");
-            }
+            }*/
         }
 
         private void App_B_FormClosing(object sender, FormClosingEventArgs e)
@@ -93,14 +93,14 @@ namespace App_B
 
             var responseRecord = client.Execute(recordRequest);
 
-            if (responseRecord.StatusCode != HttpStatusCode.OK)
+            /*if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
             {
-                MessageBox.Show($"Failed to create record: {responseRecord.StatusDescription}");
+                MessageBox.Show($"Failed to create application: {responseRecord.StatusDescription}");
             }
             else
             {
                 MessageBox.Show("Record Created!");
-            }
+            }*/
 
             //mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes("on"));
         }
@@ -108,17 +108,17 @@ namespace App_B
 
         private void buttonOff_Click(object sender, EventArgs e)
         {
-            var recordRequest = new RestRequest("Lighting/light_bulb/record/9", Method.Delete);
+            var recordRequest = new RestRequest("Lighting/light_bulb/record/on", Method.Delete);
 
-            var responseRecord = client.Execute(recordRequest);
-            if (responseRecord.StatusCode != HttpStatusCode.OK)
+            /*var responseRecord = client.Execute(recordRequest);
+            if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
             {
                 MessageBox.Show($"Failed to delete record: {responseRecord.StatusDescription}");
             }
             else
             {
                 MessageBox.Show("Record Deleted!");
-            }
+            }*/
 
             //mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes("off"));
         }
