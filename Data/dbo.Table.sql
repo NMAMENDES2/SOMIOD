@@ -17,7 +17,7 @@ CREATE TABLE [dbo].[Container]
     [parent] INT NOT NULL,
     PRIMARY KEY CLUSTERED ([Id] ASC),
     UNIQUE NONCLUSTERED ([name] ASC),
-    CONSTRAINT [FK_Container_ToApplication] FOREIGN KEY ([parent]) REFERENCES [dbo].[Application] ([Id])
+    CONSTRAINT [FK_Container_ToApplication] FOREIGN KEY ([parent]) REFERENCES [dbo].[Application] ([Id]) ON DELETE CASCADE
 )
 
 
@@ -31,7 +31,7 @@ CREATE TABLE [dbo].[Notification] (
     [enabled]           BIT           DEFAULT ((0)) NOT NULL,
     PRIMARY KEY CLUSTERED ([Id] ASC),
     UNIQUE NONCLUSTERED ([name] ASC),
-    CONSTRAINT [FK_Notification_ToContainer] FOREIGN KEY ([parent]) REFERENCES [dbo].[Container] ([Id])
+    CONSTRAINT [FK_Notification_ToContainer] FOREIGN KEY ([parent]) REFERENCES [dbo].[Container] ([Id]) ON DELETE CASCADE
 );
 
 
@@ -46,7 +46,7 @@ CREATE TABLE [dbo].[Record] (
     [parent]            INT           NOT NULL,
     PRIMARY KEY CLUSTERED ([Id] ASC),
     UNIQUE NONCLUSTERED ([name] ASC),
-    CONSTRAINT [FK_Record_ToContainer] FOREIGN KEY ([parent]) REFERENCES [dbo].[Container] ([Id])
+    CONSTRAINT [FK_Record_ToContainer] FOREIGN KEY ([parent]) REFERENCES [dbo].[Container] ([Id]) ON DELETE CASCADE
 );
 
 
