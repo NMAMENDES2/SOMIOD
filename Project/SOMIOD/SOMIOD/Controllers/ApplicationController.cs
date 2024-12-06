@@ -14,66 +14,206 @@ using SOMIOD.Models;
 using System.Data.SqlTypes;
 using System.IO;
 using System.Xml.Serialization;
+using System.Web.Caching;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace SOMIOD.Controllers
 {
     [RoutePrefix("api/somiod")]
     public class ApplicationController : ApiController
     {
+
         string connstr = Properties.Settings.Default.ConString;
 
-        #region CRUD's
-
-        [Route("create")]
-        [HttpPost]
-        public HttpResponseMessage Create(HttpRequestMessage entity)
+        // ---------- Talvez meter isto num ficheiro de utils
+        private bool doesNameExistDB(string name)
         {
-            var content = Request.Content.ReadAsStringAsync().Result;
-
-            try
+            using (SqlConnection conn = new SqlConnection(connstr))
             {
-                // usa o XmlSerializer para desserializar o XML para um objeto Application
-                var serializer = new XmlSerializer(typeof(Application));
-
-                // Usando StringReader para ler a string XML
-                using (StringReader reader = new StringReader(content))
+                conn.Open();
+                string query = "SELECT * FROM Application WHERE name = @name";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    // desserializa o XML para o objeto Application
-                    Application application = (Application)serializer.Deserialize(reader);
-
-                    using (SqlConnection connection = new SqlConnection(connstr))
+                    cmd.Parameters.AddWithValue("@name", name);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        connection.Open();
-                        string query = "INSERT INTO Application (name) VALUES (@name)";
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        cmd.Parameters.AddWithValue("@name", application.name);
-                        cmd.ExecuteNonQuery();
+                        return reader.HasRows;
+
                     }
                 }
 
-                return Request.CreateResponse(HttpStatusCode.Created, "Application created successfully.");
-            }
-            catch (Exception ex)
-            {
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
 
-
-        [Route("getAll")]
-        [HttpGet]
-        // Terceiro endpoints dado no enunciado localhost/api/somiod
-        public HttpResponseMessage GetAll() // Não dá com HTTPActionResult tem de ser assim
+        private int getParentID(string name)
         {
-            var apps = new List<Application>();
+            Application app = null;
+            using (SqlConnection conn = new SqlConnection(connstr))
+            {
+                conn.Open();
+                string query = "SELECT * FROM Application WHERE name = @name";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", name);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            app = new Application();
+                            app.id = (int)reader["Id"];
+                        }
+                    }
 
+                }
+            }
+            return app.id;
+        }
+
+        private string getUniqueName(string name)
+        {
+            if (doesNameExistDB(name))
+            {
+                return Guid.NewGuid().ToString();
+            }
+            else
+            {
+                return name;
+            }
+        }
+
+        // -----------------------------------------------------------------------------
+
+        #region CRUD's
+        //
+        // Feito
+        //
+        [Route("")]
+        [HttpPost]
+        public HttpResponseMessage CreateApplication()
+        {
+
+            HttpResponseMessage response;
+            byte[] bytes;
+            using (Stream stream = Request.Content.ReadAsStreamAsync().Result)
+            {
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    stream.CopyTo(memoryStream);
+                    bytes = memoryStream.ToArray();
+                }
+            }
+
+            if (bytes == null || bytes.Length == 0)
+            {
+                response = Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Couldn't process any data");
+                return response;
+            }
+
+            string xmlContent = Encoding.UTF8.GetString(bytes);
+            XmlDocument doc = new XmlDocument();
             try
             {
-                var headers = HttpContext.Current.Request.Headers;
-                string somiodLocate = headers.Get("somiod-locate"); // Meter somiod-discover nos headers no postman com value application
+                doc.LoadXml(xmlContent);
+                XmlNode root = doc.DocumentElement;
+                XmlNode nameNode = doc.SelectSingleNode("/request/name");
+                XmlNode resNode = doc.SelectSingleNode("/request/res_type");
+                string name;
 
-                // Fetch db
-                if (somiodLocate == "application")
+                if (root == null || root.Name != "request")
+                {
+                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid root element. Expecting <request>");
+                    return response;
+                }
+
+                if (nameNode != null && !string.IsNullOrWhiteSpace(nameNode.InnerText))
+                {
+                    name = nameNode.InnerText;
+                }
+                else
+                {
+                    name = getUniqueName(Guid.NewGuid().ToString());
+                }
+
+                if (resNode.InnerText == "application")
+                {
+                    try
+                    {
+                        using (SqlConnection conn = new SqlConnection(connstr))
+                        {
+                            conn.Open();
+                            string query = "INSERT INTO Application (name) VALUES (@name)";
+                            using (SqlCommand cmd = new SqlCommand(query, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@name", name);
+                                int rows = cmd.ExecuteNonQuery();
+                                if (rows > 0)
+                                {
+                                    response = Request.CreateResponse(HttpStatusCode.OK, "Application Created!");
+                                    return response;
+                                }
+                                else
+                                {
+                                    response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Error creating the application");
+                                    return response;
+                                }
+                            }
+                        }
+                    }
+                    catch (SqlException Ex)
+                    {
+                        if (Ex.Number == 2627)
+                        {
+                            response = Request.CreateResponse(HttpStatusCode.BadRequest, "Application already exists");
+                            return response;
+                        }
+                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
+                        return response;
+                    }
+                }
+                else
+                {
+                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
+                    return response;
+                }
+            }
+            catch (XmlException ex)
+            {
+                response = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+                return response;
+            }
+
+        }
+
+        //
+        // Feito
+        //
+
+        [Route("")]
+        [HttpGet]
+        public HttpResponseMessage GetAll()
+        {
+            var apps = new List<Application>();
+            HttpResponseMessage response;
+            var headers = HttpContext.Current.Request.Headers;
+            string somiodLocate = headers.Get("somiod-locate");
+
+            if (string.IsNullOrEmpty(somiodLocate))
+            {
+                response = Request.CreateResponse(HttpStatusCode.BadRequest, "Missing header");
+                return response;
+            }
+
+            var responseXml = new StringWriter();
+                var settings = new XmlWriterSettings
+                {
+                    OmitXmlDeclaration = true, // remove a declaração <?xml ... ?>
+                    Indent = true
+                };
+
+            // Fetch db
+            if (somiodLocate == "application")
+            {
+                try
                 {
                     using (SqlConnection connection = new SqlConnection(connstr))
                     {
@@ -92,30 +232,74 @@ namespace SOMIOD.Controllers
                             apps.Add(app);
                         }
                     }
+
+                }
+                catch (SqlException Ex)
+                {
+                    response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
+                    return response;
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, apps);
+                try
+                {
+
+                    using (var writer = XmlWriter.Create(responseXml, settings))
+                    {
+                        writer.WriteStartElement("Response"); // personaliza o nó de raiz
+                        foreach (var app in apps)
+                        {
+                            writer.WriteStartElement("Application"); // cada item será representado como um nó <Container> writer.WriteElementString("id", app.id.ToString());
+                            writer.WriteElementString("ID", app.id.ToString());
+                            writer.WriteElementString("name", app.name);
+                            writer.WriteElementString("creation_datetime", app.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
+                            writer.WriteEndElement(); // fecha o nó <Container>
+                        }
+                        writer.WriteEndElement(); // fecha o nó de raiz <Containers>
+
+                    }
+                    string xmlContent = responseXml.ToString();
+                    response = Request.CreateResponse(HttpStatusCode.OK, xmlContent);
+                    response.Content = new StringContent(xmlContent, Encoding.UTF8, "application/xml");
+                    return response;
+                }
+                catch (XmlException Ex)
+                {
+                    response = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, Ex.Message);
+                    return response;
+                }
             }
-            catch (Exception ex)
-            {
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+            else {
+                response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting value application");
+                return response;
             }
         }
 
+        //
+        // Feito
+        //
 
-        [Route("get/{id}")]
+        [Route("{application}")]
         [HttpGet]
-        public HttpResponseMessage Get(int id)
+        public HttpResponseMessage GetApplication(string application)
         {
-            try
+            var responseXml = new StringWriter();
+            var settings = new XmlWriterSettings
             {
-                Application app = null;
-                using (SqlConnection connection = new SqlConnection(connstr))
-                {
-                    connection.Open();
-                    string query = "SELECT * FROM Application WHERE id = @id";
+                OmitXmlDeclaration = true, // remove a declaração <?xml ... ?>
+                Indent = true
+            };
+
+            HttpResponseMessage response;
+            var headers = HttpContext.Current.Request.Headers;
+            string somiodLocate = headers.Get("somiod-locate");
+
+            Application app = null;
+            using (SqlConnection connection = new SqlConnection(connstr))
+            {
+                connection.Open();
+                    string query = "SELECT * FROM Application WHERE name = @name";
                     SqlCommand cmd = new SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@name", application);
                     SqlDataReader registos = cmd.ExecuteReader();
                     if (registos.Read())
                     {
@@ -129,85 +313,206 @@ namespace SOMIOD.Controllers
 
                 if (app == null)
                 {
-                    return Request.CreateResponse(HttpStatusCode.NotFound, "Application not found.");
+                    response = Request.CreateResponse(HttpStatusCode.NotFound, "Application not found.");
+                    return response;
+                }
+                if (somiodLocate == "container")
+                {
+                    var containers = new List<Container>();
+                    try
+                    {
+                        using (SqlConnection connection = new SqlConnection(connstr))
+                        {
+                            connection.Open();
+                            string query = "SELECT * FROM Container WHERE parent = @parent";
+                            SqlCommand cmd = new SqlCommand(query, connection);
+                            cmd.Parameters.AddWithValue("@parent", app.id);
+                            SqlDataReader registos = cmd.ExecuteReader();
+                            while (registos.Read())
+                            {
+                                Container container = new Container
+                                {
+                                    id = (int)registos["id"],
+                                    name = (string)registos["name"],
+                                    creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"],
+                                    parent = (int)registos["parent"]
+                                };
+                                containers.Add(container);
+                            }
+                        }
+                        using (var writer = XmlWriter.Create(responseXml, settings))
+                        {
+                            writer.WriteStartElement("Response"); // personaliza o nó de raiz
+                            foreach (var container in containers)
+                            {
+                                writer.WriteStartElement("Container"); // cada item será representado como um nó <Container> writer.WriteElementString("id", app.id.ToString());
+                                writer.WriteElementString("ID", container.id.ToString());
+                                writer.WriteElementString("name", container.name);
+                                writer.WriteElementString("creation_datetime", container.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
+                                writer.WriteElementString("parent", container.parent.ToString());
+                                writer.WriteEndElement(); // fecha o nó <Container>
+                            }
+                            writer.WriteEndElement(); // fecha o nó de raiz <Containers>
+
+                        }
+
+                        string xmlContent = responseXml.ToString();
+
+                        response = Request.CreateResponse(HttpStatusCode.OK, xmlContent);
+                        response.Content = new StringContent(xmlContent, Encoding.UTF8, "application/xml");
+                        return response;
+
+                    }
+                    catch (Exception Ex)
+                    {
+                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
+                        return response;
+                    }
+                }
+                try
+                {
+                    using (var writer = XmlWriter.Create(responseXml, settings))
+                    {
+                        writer.WriteStartElement("Application"); // personaliza o nó de raiz writer.WriteStartElement("Application"); // cada item será representado como um nó <Container> writer.WriteElementString("id", app.id.ToString());
+                        writer.WriteElementString("id", app.id.ToString());
+                        writer.WriteElementString("name", app.name);
+                        writer.WriteElementString("creation_datetime", app.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
+                        writer.WriteEndElement(); // fecha o nó <Container>
+                    }
+
+                    string xmlContent = responseXml.ToString();
+
+                    response = Request.CreateResponse(HttpStatusCode.OK, xmlContent);
+                    response.Content = new StringContent(xmlContent, Encoding.UTF8, "application/xml");
+                    return response;
+
+                }
+                catch (Exception ex)
+                {
+                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, app);
             }
-            catch (Exception ex)
-            {
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-            }
-        }
+
+        //
+        // Feito
+        //
 
 
-        [Route("update/{id}")]
+        [Route("{application}")]
         [HttpPut]
-        public HttpResponseMessage Update(int id, HttpRequestMessage request)
+        public HttpResponseMessage UpdateApplication(string application) // o que é o segundo argumento?
         {
+            HttpResponseMessage response;
+            byte[] bytes;
+            using (Stream stream = Request.Content.ReadAsStreamAsync().Result)
+            {
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    stream.CopyTo(memoryStream);
+                    bytes = memoryStream.ToArray();
+                }
+            }
+
+            if (bytes == null || bytes.Length == 0)
+            {
+                response = Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Couldn't process any data");
+                return response;
+            }
+
+            string xmlContent = Encoding.UTF8.GetString(bytes);
+            XmlDocument doc = new XmlDocument();
             try
             {
-                // Lê o conteúdo da requisição (XML)
-                var content = request.Content.ReadAsStringAsync().Result;
+                doc.LoadXml(xmlContent);
+                XmlNode root = doc.DocumentElement;
+                XmlNode nameNode = doc.SelectSingleNode("/request/name");
+                XmlNode resNode = doc.SelectSingleNode("/request/res_type");
+                string name;
 
-                // Usando o XmlSerializer para desserializar o XML para um objeto Application
-                var serializer = new XmlSerializer(typeof(Application));
-
-                using (StringReader reader = new StringReader(content))
+                if (root == null || root.Name != "request")
                 {
-                    // Desserializa o XML para o objeto Application
-                    Application application = (Application)serializer.Deserialize(reader);
+                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid root element. Expecting <request>");
+                    return response;
 
-                    // Verifica se o ID do objeto Application corresponde ao ID da URL
-                    /*
-                    if (application.id != id)
-                    {
-                        return Request.CreateResponse(HttpStatusCode.BadRequest, "ID mismatch.");
-                    }
-
-                    */
-
-                    using (SqlConnection connection = new SqlConnection(connstr))
-                    {
-                        connection.Open();
-
-                        // Atualiza os dados na tabela Application
-                        string query = "UPDATE Application SET name = @name WHERE Id = @id";
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        cmd.Parameters.AddWithValue("@name", application.name);
-                        cmd.Parameters.AddWithValue("@id", id);
-
-                        int rowsAffected = cmd.ExecuteNonQuery();
-
-                        // Verifica se a atualização foi bem-sucedida
-                        if (rowsAffected == 0)
-                        {
-                            return Request.CreateResponse(HttpStatusCode.NotFound, "Application not found.");
-                        }
-                    }
+                }
+                if (nameNode != null && !string.IsNullOrWhiteSpace(nameNode.InnerText))
+                {
+                    name = nameNode.InnerText;
+                }
+                else
+                {
+                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "No name to update");
+                    return response;
                 }
 
-                return Request.CreateResponse(HttpStatusCode.OK, "Application updated successfully.");
+
+                if (resNode.InnerText == "application")
+                {
+                    try
+                    {
+                        using (SqlConnection conn = new SqlConnection(connstr))
+                        {
+                            conn.Open();
+                            string query = "UPDATE Application SET name = @name WHERE name = @namePrev";
+                            using (SqlCommand cmd = new SqlCommand(query, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@name", name);
+                                cmd.Parameters.AddWithValue("@namePrev", application);
+                                int rows = cmd.ExecuteNonQuery();
+                                if (rows > 0)
+                                {
+                                    response = Request.CreateResponse(HttpStatusCode.OK, "Application Updated!");
+                                    return response;
+                                }
+                                else
+                                {
+                                    response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Application does not exist");
+                                    return response;
+                                }
+                            }
+                        }
+                    }
+                    catch (SqlException Ex)
+                    {
+                        if (Ex.Number == 2627)
+                        {
+                            response = Request.CreateResponse(HttpStatusCode.BadRequest, "Application name already exists");
+                            return response;
+                        }
+                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
+                        return response;
+                    }
+                }
+                else
+                {
+                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
+                    return response;
+                }
             }
-            catch (Exception ex)
+            catch (XmlException ex)
             {
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+                response = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+                return response;
             }
         }
 
+        //
+        // Feito
+        //
 
-        [Route("delete/{id}")]
+        [Route("{application}")]
         [HttpDelete]
-        public HttpResponseMessage Delete(int id)
+        public HttpResponseMessage Delete(string application)
         {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connstr))
                 {
                     connection.Open();
-                    string query = "DELETE FROM Application WHERE id = @id";
+                    string query = "DELETE FROM Application WHERE name = @name";
                     SqlCommand cmd = new SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@name", application);
                     int rowsAffected = cmd.ExecuteNonQuery();
 
                     if (rowsAffected == 0)
@@ -220,7 +525,120 @@ namespace SOMIOD.Controllers
             }
             catch (Exception ex)
             {
-                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
+        }
+
+
+        [HttpPost]
+        [Route("{application}")]
+        public HttpResponseMessage createContainerOnAppliction(string application)
+        {
+
+            HttpResponseMessage response;
+            byte[] bytes;
+
+            var isValid = doesNameExistDB(application);
+            if (isValid == false)
+            {
+                response = Request.CreateResponse(HttpStatusCode.BadRequest, "Application does not exist");
+                return response;
+            }
+
+
+            using (Stream stream = Request.Content.ReadAsStreamAsync().Result)
+            {
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    stream.CopyTo(memoryStream);
+                    bytes = memoryStream.ToArray();
+                }
+            }
+
+            if (bytes == null || bytes.Length == 0)
+            {
+                response = Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Couldn't process any data");
+                return response;
+            }
+
+            string xmlContent = Encoding.UTF8.GetString(bytes);
+            XmlDocument doc = new XmlDocument();
+            try
+            {
+                doc.LoadXml(xmlContent);
+                XmlNode root = doc.DocumentElement;
+                XmlNode nameNode = doc.SelectSingleNode("/request/name");
+                XmlNode resNode = doc.SelectSingleNode("/request/res_type");
+                string name;
+
+                if (root == null || root.Name != "request")
+                {
+                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid root element. Expecting <request>");
+                    return response;
+                }
+
+                if (nameNode != null && !string.IsNullOrWhiteSpace(nameNode.InnerText))
+                {
+                    name = nameNode.InnerText;
+                }
+                else
+                {
+                    name = getUniqueName(Guid.NewGuid().ToString());
+                }
+
+                if (resNode == null)
+                {
+                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting res_type");
+                    return response;
+                }
+
+                if (resNode.InnerText == "container")
+                {
+                    try
+                    {
+                        using (SqlConnection conn = new SqlConnection(connstr))
+                        {
+                            conn.Open();
+                            string query = "INSERT INTO Container (name, parent) VALUES (@name, @parent)";
+                            using (SqlCommand cmd = new SqlCommand(query, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@name", name);
+                                cmd.Parameters.AddWithValue("@parent", getParentID(application));
+                                int rows = cmd.ExecuteNonQuery();
+                                if (rows > 0)
+                                {
+                                    response = Request.CreateResponse(HttpStatusCode.OK, "Container Created!");
+                                    return response;
+                                }
+                                else
+                                {
+                                    response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Error creating the container");
+                                    return response;
+                                }
+                            }
+                        }
+                    }
+                    catch (SqlException Ex)
+                    {
+                        if (Ex.Number == 2627)
+                        {
+                            response = Request.CreateResponse(HttpStatusCode.BadRequest, "Container already exists");
+                            return response;
+                        }
+                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
+                        return response;
+                    }
+                }
+                else
+                {
+                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
+                    return response;
+                }
+            }
+            catch (XmlException ex)
+            {
+                response = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+                return response;
             }
         }
 

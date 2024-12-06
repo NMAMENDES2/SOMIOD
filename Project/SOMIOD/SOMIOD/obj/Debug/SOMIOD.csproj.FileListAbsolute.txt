@@ -199,3 +199,5 @@ C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.cs
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.csproj.Up2Date
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.dll
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.pdb
+E:\Faculdade\SOMIOD\Project\SOMIOD\SOMIOD\bin\M2Mqtt.Net.dll
+E:\Faculdade\SOMIOD\Project\SOMIOD\SOMIOD\bin\M2Mqtt.Net.pdb
