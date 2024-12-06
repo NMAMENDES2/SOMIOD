@@ -93,6 +93,19 @@ namespace App_A
             {
                 MessageBox.Show($"Failed to create application: {responseCont.StatusDescription}");
             }*/
+
+            rawXml = @"<request> 
+                        <name>lightNoti</name>
+                        <event>2</event>
+                        <endpoint>http://localhost:57806/api/somiod/Lighting/light_bulb</endpoint>
+                        <enabled>true</enabled>
+                        <res_type>notification</res_type> 
+                      </request>";
+
+            var onNotiRequest = new RestRequest("/Lighting/light_bulb", Method.Post);
+            onNotiRequest.AddHeader("Content-Type", "application/xml");
+            onNotiRequest.AddParameter("application/xml", rawXml, ParameterType.RequestBody);
+            var responseOnNoti = client.Execute(onNotiRequest);
         }
 
         private void MqttClient_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)

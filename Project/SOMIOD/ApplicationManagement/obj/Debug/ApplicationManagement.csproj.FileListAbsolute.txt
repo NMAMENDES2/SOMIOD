@@ -85,3 +85,7 @@ C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMI
 C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.csproj.CoreCompileInputs.cache
 C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.exe
 C:\Users\Lyuzi\Desktop\Universidade\Integração de Sistemas\SOMIOD\Project\SOMIOD\ApplicationManagement\obj\Debug\ApplicationManagement.pdb
+C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\M2Mqtt.Net.dll
+C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\Newtonsoft.Json.dll
+C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\M2Mqtt.Net.pdb
+C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\Newtonsoft.Json.xml

@@ -462,9 +462,9 @@ namespace SOMIOD.Controllers
             }
         }
 
-        [Route("{application}/{container}/notification/{record}")]
+        [Route("{application}/{container}/notification/{notification}")]
         [HttpDelete]
-        public HttpResponseMessage DeleteNotification(string application, string container, string record)
+        public HttpResponseMessage DeleteNotification(string application, string container, string notification)
         {
             HttpResponseMessage response;
 
@@ -489,10 +489,10 @@ namespace SOMIOD.Controllers
                 return response;
             }
 
-            var isBelongNotification = doesNotificationBelongToContainer(container, record);
+            var isBelongNotification = doesNotificationBelongToContainer(container, notification);
             if (!isBelongNotification)
             {
-                response = Request.CreateResponse(HttpStatusCode.BadRequest, "No notification named " + record + " on that container");
+                response = Request.CreateResponse(HttpStatusCode.BadRequest, "No notification named " + notification + " on that container");
                 return response;
 
             }
@@ -503,7 +503,7 @@ namespace SOMIOD.Controllers
                     connection.Open();
                     string query = "DELETE FROM Notification WHERE name = @name";
                     SqlCommand cmd = new SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@name", record);
+                    cmd.Parameters.AddWithValue("@name", notification);
 
                     int rowsAffected = cmd.ExecuteNonQuery();
                     if (rowsAffected == 0)

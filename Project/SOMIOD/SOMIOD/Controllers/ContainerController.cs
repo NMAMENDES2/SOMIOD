@@ -43,7 +43,6 @@ namespace SOMIOD.Controllers
             return container.id;
         }
 
-
         private bool doesContainerBelongToApplication(string application, string container)
         {
             Application app = null;
@@ -155,7 +154,7 @@ namespace SOMIOD.Controllers
                 return response;
             }
 
-            var isContainer = doesContainerExist(application);
+            var isContainer = doesContainerExist(container);
             if (!isContainer)
             {
                 response = Request.CreateResponse(HttpStatusCode.NotFound, "Container does not exist");
