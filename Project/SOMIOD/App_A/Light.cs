@@ -95,10 +95,10 @@ namespace App_A
             }*/
 
             rawXml = @"<request> 
-                        <name>lightNoti</name>
-                        <event>2</event>
-                        <endpoint>http://localhost:57806/api/somiod/Lighting/light_bulb</endpoint>
-                        <enabled>true</enabled>
+                        <name>lightNotiCreate</name>
+                        <event>1</event>
+                        <parent>light_bulb</parent>
+                        <endpoint>127.0.0.1</endpoint>
                         <res_type>notification</res_type> 
                       </request>";
 

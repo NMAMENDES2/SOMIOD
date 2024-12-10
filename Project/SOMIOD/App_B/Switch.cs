@@ -108,7 +108,17 @@ namespace App_B
 
         private void buttonOff_Click(object sender, EventArgs e)
         {
-            var recordRequest = new RestRequest("Lighting/light_bulb/record/on", Method.Delete);
+            string rawXml = @"<request> 
+                        <name>off</name>
+                        <content>off</content>
+                        <res_type>record</res_type> 
+                      </request>";
+
+            var recordRequest = new RestRequest("/Lighting/light_bulb", Method.Post);
+            recordRequest.AddHeader("Content-Type", "application/xml");
+            recordRequest.AddParameter("application/xml", rawXml, ParameterType.RequestBody);
+
+            var responseRecord = client.Execute(recordRequest);
 
             /*var responseRecord = client.Execute(recordRequest);
             if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
