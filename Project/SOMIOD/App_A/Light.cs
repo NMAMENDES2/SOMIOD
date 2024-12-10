@@ -64,7 +64,7 @@ namespace App_A
 
             string rawXml = @"<request>
                                 <name>Lighting</name> 
-                                <res_type>application</res_type> 
+                                <res_type>application</res_type>    
                               </request>";
 
             var appRequest = new RestRequest("", Method.Post);
@@ -110,11 +110,7 @@ namespace App_A
 
         private void MqttClient_MqttMsgPublishReceived(object sender, MqttMsgPublishEventArgs e)
         {
-            string topic = e.Topic;
             string msg = Encoding.UTF8.GetString(e.Message);
-
-            if (topic != topics[0])
-                MessageBox.Show("WRONG TOPIC");
 
             this.Invoke((MethodInvoker)(() =>
             {
