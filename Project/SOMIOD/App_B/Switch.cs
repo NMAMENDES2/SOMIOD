@@ -92,14 +92,14 @@ namespace App_B
 
             var responseRecord = client.Execute(recordRequest);
 
-            if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
+            /*if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
             {
                 MessageBox.Show($"Failed to create application: {responseRecord.StatusDescription}");
             }
             else
             {
                 MessageBox.Show("Record Created!");
-            }
+            }*/
 
             //mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes("on"));
         }
@@ -118,14 +118,14 @@ namespace App_B
 
             var responseRecord = client.Execute(recordRequest);
 
-            if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
+            /*if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
             {
                 MessageBox.Show($"Failed to create record: {responseRecord.StatusDescription}");
             }
             else
             {
                 MessageBox.Show("Record Created!");
-            }
+            }*/
 
             //mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes("off"));
         }

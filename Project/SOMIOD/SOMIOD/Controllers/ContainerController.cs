@@ -599,6 +599,7 @@ namespace SOMIOD.Controllers
                             conn.Open();
                             string query = "INSERT INTO Record (name, parent, content) VALUES (@name, @parent, @content)";
                             string querynotif = "SELECT * FROM Notification";
+                            mqttClient.Connect(Guid.NewGuid().ToString());
                             using (SqlCommand cmdNotif = new SqlCommand(querynotif, conn))
                             {
                                 SqlDataReader reader = cmdNotif.ExecuteReader();
@@ -609,9 +610,12 @@ namespace SOMIOD.Controllers
                                         @event = (int)reader["event"]
                                     };
                                     if (notification.@event == 1) {
-                                        mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes("on"));
+                                        
+                                        //mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes(contentNode.InnerText));
+                                        
                                     }
                                 }
+                                reader.Close();
                             }
                             using (SqlCommand cmd = new SqlCommand(query, conn))
                             {
@@ -622,6 +626,7 @@ namespace SOMIOD.Controllers
                                 if (rows > 0)
                                 {
                                     response = Request.CreateResponse(HttpStatusCode.OK, "Record Created!");
+                                    mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes(contentNode.InnerText));
                                     return response;
                                 }
                                 else
