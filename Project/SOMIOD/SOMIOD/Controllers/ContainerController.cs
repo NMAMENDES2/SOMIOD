@@ -12,6 +12,7 @@ using System.Web.Services.Protocols;
 using System.Xml;
 using System.Xml.Serialization;
 using SOMIOD.Models;
+using uPLibrary.Networking.M2Mqtt;
 
 namespace SOMIOD.Controllers
 {
@@ -580,6 +581,10 @@ namespace SOMIOD.Controllers
 
                 if (resNode.InnerText == "record")
                 {
+                    MqttClient mqttClient;
+                    string[] topics = { container };
+                    mqttClient = new MqttClient("127.0.0.1");
+
                     XmlNode contentNode = doc.SelectSingleNode("/request/content");
                     if (contentNode == null)
                     {
@@ -593,6 +598,21 @@ namespace SOMIOD.Controllers
                         {
                             conn.Open();
                             string query = "INSERT INTO Record (name, parent, content) VALUES (@name, @parent, @content)";
+                            string querynotif = "SELECT * FROM Notification";
+                            using (SqlCommand cmdNotif = new SqlCommand(querynotif, conn))
+                            {
+                                SqlDataReader reader = cmdNotif.ExecuteReader();
+                                while (reader.Read())
+                                {
+                                    Notification notification = new Notification
+                                    {
+                                        @event = (int)reader["event"]
+                                    };
+                                    if (notification.@event == 1) {
+                                        mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes("on"));
+                                    }
+                                }
+                            }
                             using (SqlCommand cmd = new SqlCommand(query, conn))
                             {
                                 cmd.Parameters.AddWithValue("@name", name);
