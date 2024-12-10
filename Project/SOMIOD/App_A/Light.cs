@@ -99,7 +99,7 @@ namespace App_A
                         <event>1</event>
                         <parent>light_bulb</parent>
                         <endpoint>127.0.0.1</endpoint>
-                        <res_type>notification</res_type> 
+                        <res_type>notification</res_type>
                       </request>";
 
             var onNotiRequest = new RestRequest("/Lighting/light_bulb", Method.Post);

@@ -65,10 +65,10 @@ namespace App_B
 
             var responseApp = client.Execute(appRequest);
 
-            /*if (responseApp.StatusCode != HttpStatusCode.OK && responseApp.StatusCode != HttpStatusCode.BadRequest)
+            if (responseApp.StatusCode != HttpStatusCode.OK && responseApp.StatusCode != HttpStatusCode.BadRequest)
             {
                 MessageBox.Show($"Failed to create application: {responseApp.StatusDescription}");
-            }*/
+            }
         }
 
         private void App_B_FormClosing(object sender, FormClosingEventArgs e)
@@ -81,8 +81,7 @@ namespace App_B
 
         private void buttonON_Click(object sender, EventArgs e)
         {
-            string rawXml = @"<request> 
-                        <name>on</name>
+            string rawXml = @"<request>
                         <content>on</content>
                         <res_type>record</res_type> 
                       </request>";
@@ -93,14 +92,14 @@ namespace App_B
 
             var responseRecord = client.Execute(recordRequest);
 
-            /*if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
+            if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
             {
                 MessageBox.Show($"Failed to create application: {responseRecord.StatusDescription}");
             }
             else
             {
                 MessageBox.Show("Record Created!");
-            }*/
+            }
 
             //mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes("on"));
         }
@@ -108,8 +107,7 @@ namespace App_B
 
         private void buttonOff_Click(object sender, EventArgs e)
         {
-            string rawXml = @"<request> 
-                        <name>off</name>
+            string rawXml = @"<request>
                         <content>off</content>
                         <res_type>record</res_type> 
                       </request>";
@@ -120,15 +118,14 @@ namespace App_B
 
             var responseRecord = client.Execute(recordRequest);
 
-            /*var responseRecord = client.Execute(recordRequest);
             if (responseRecord.StatusCode != HttpStatusCode.OK && responseRecord.StatusCode != HttpStatusCode.BadRequest)
             {
-                MessageBox.Show($"Failed to delete record: {responseRecord.StatusDescription}");
+                MessageBox.Show($"Failed to create record: {responseRecord.StatusDescription}");
             }
             else
             {
-                MessageBox.Show("Record Deleted!");
-            }*/
+                MessageBox.Show("Record Created!");
+            }
 
             //mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes("off"));
         }

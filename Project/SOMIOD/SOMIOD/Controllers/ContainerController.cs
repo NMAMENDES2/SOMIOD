@@ -629,24 +629,12 @@ namespace SOMIOD.Controllers
                     XmlNode endPointNode = doc.SelectSingleNode("/request/endpoint");
                     XmlNode eventNode = doc.SelectSingleNode("/request/event");
                     XmlNode enabledNode = doc.SelectSingleNode("/request/enabled");
+                    var enabledNodeValue = "";
                     var endpoint = endPointNode.InnerText;
 
                     if (endPointNode == null)
                     {
                         response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting endpoint");
-                        return response;
-                    }
-
-                    if (!(endpoint.StartsWith("mqtt://") || endpoint.StartsWith("http://"))) {
-                        response = Request.CreateResponse(HttpStatusCode.BadRequest, "Endpoint must begin with mqtt:// or htpp://");
-                        return response;
-                    }
-
-                    var ip = endpoint.Substring(7);
-                    string pattern = @"^((([0-1]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([0-1]?[0-9]{1,2}|2[0-4][0-9]|25[0-5]))$";
-                    bool isValid = Regex.IsMatch(ip, pattern);
-                    if (!isValid) {
-                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Invalid IP Address");
                         return response;
                     }
 
@@ -658,8 +646,11 @@ namespace SOMIOD.Controllers
 
                     if (enabledNode == null)
                     {
-                        response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting enabled");
-                        return response;
+                        enabledNodeValue = "true";
+                    }
+                    else
+                    {
+                        enabledNodeValue = enabledNode.InnerText;
                     }
 
                     if ((eventNode.InnerText != "1" && eventNode.InnerText != "2"))
@@ -680,8 +671,8 @@ namespace SOMIOD.Controllers
                                 cmd.Parameters.AddWithValue("@name", name);
                                 cmd.Parameters.AddWithValue("@parent", getParentID(container));
                                 cmd.Parameters.AddWithValue("@endpoint", endPointNode.InnerText);
-                                cmd.Parameters.AddWithValue("@event", eventNode.InnerText);
-                                cmd.Parameters.AddWithValue("@enabled", enabledNode.InnerText);
+                                cmd.Parameters.AddWithValue("@event", Convert.ToInt32(eventNode.InnerText));
+                                cmd.Parameters.AddWithValue("@enabled", enabledNodeValue);
                                 int rows = cmd.ExecuteNonQuery();
                                 if (rows > 0)
                                 {
