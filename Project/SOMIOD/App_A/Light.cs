@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using RestSharp;
@@ -114,18 +115,34 @@ namespace App_A
 
             this.Invoke((MethodInvoker)(() =>
             {
-                if (msg.Equals("on", StringComparison.OrdinalIgnoreCase))
+                try
                 {
-                    pictureBox1.Image = Properties.Resources.on;
+                    XmlDocument xmlDoc = new XmlDocument();
+                    xmlDoc.LoadXml(msg);
+
+                    XmlNode content = xmlDoc.SelectSingleNode("//content");
+                    if (content == null)
+                    {
+                        MessageBox.Show("Invalid message");
+                        return;
+                    }
+                    if (content.InnerText.Equals("on", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pictureBox1.Image = Properties.Resources.on;
+                    }
+                    else if (content.InnerText.Equals("off", StringComparison.OrdinalIgnoreCase))
+                    {
+                        pictureBox1.Image = Properties.Resources.off;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Invalid message");
+                    }
                 }
-                else if (msg.Equals("off", StringComparison.OrdinalIgnoreCase))
-                {
-                    pictureBox1.Image = Properties.Resources.off;
+                catch (Exception Ex) {
+                    MessageBox.Show(Ex.Message);
                 }
-                else
-                {
-                    MessageBox.Show("Invalid message");
-                }
+
             }));
         }
 
@@ -142,6 +159,11 @@ namespace App_A
             {
                 MessageBox.Show($"Error during MQTT disconnection: {ex.Message}");
             }
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

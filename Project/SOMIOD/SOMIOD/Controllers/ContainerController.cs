@@ -590,7 +590,7 @@ namespace SOMIOD.Controllers
                                 {
                                     mqttClient = new MqttClient(endpoint);
                                     mqttClient.Connect(Guid.NewGuid().ToString());
-                                    mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes(contentNode.InnerText));
+                                    mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes(doc.OuterXml));
                                 }
                                 catch (Exception ex)
                                 {
