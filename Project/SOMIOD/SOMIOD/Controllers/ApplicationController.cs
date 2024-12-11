@@ -16,6 +16,7 @@ using System.IO;
 using System.Xml.Serialization;
 using System.Web.Caching;
 using System.Runtime.InteropServices.WindowsRuntime;
+using SOMIOD.Utils;
 
 namespace SOMIOD.Controllers
 {
@@ -538,8 +539,7 @@ namespace SOMIOD.Controllers
             HttpResponseMessage response;
             byte[] bytes;
 
-            var isValid = doesNameExistDB(application);
-            if (isValid == false)
+            if (!DBTransactions.nameExists(application, "Application"))
             {
                 response = Request.CreateResponse(HttpStatusCode.BadRequest, "Application does not exist");
                 return response;

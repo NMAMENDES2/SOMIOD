@@ -9,11 +9,14 @@ namespace SOMIOD.Utils
 {
     public class DBTransactions
     {
-        string connstr = Properties.Settings.Default.ConString;
-        public bool nameExists(string name, string table)
+        public static string connstr = Properties.Settings.Default.ConString;
+        public static bool nameExists(string name, string table)
         {
             if (name == null || table == null) throw new ArgumentNullException();
-            if (!Enum.IsDefined(typeof(TableName), table)) throw new InvalidOperationException();
+            if (!Enum.IsDefined(typeof(TableName), table))
+            {
+                return false;
+            }
 
             try
             {
@@ -21,7 +24,7 @@ namespace SOMIOD.Utils
                 {
                     connection.Open();
 
-                    string query = $"SELECT COUNT(1) FROM {table} WHERE name = @name";
+                    string query = $"SELECT * FROM {table} WHERE name = @name";
 
                     using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
@@ -45,6 +48,31 @@ namespace SOMIOD.Utils
             }
         }
 
+        public static bool doesContainerBelongToApplication(string application, string container)
+        {
+            using (SqlConnection conn = new SqlConnection(connstr))
+            {
+                conn.Open();
+
+                string query = @"SELECT COUNT(1)
+                FROM Application AS app
+                INNER JOIN Container AS cont ON cont.parent = app.Id
+                WHERE app.name = @name AND cont.name = @containerName";
+
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", application);
+                    cmd.Parameters.AddWithValue("@containerName", container);
+
+                    int result = (int)cmd.ExecuteScalar();
+
+                    return result > 0;
+                }
+
+
+            }
+
+        }
 
     }
 }

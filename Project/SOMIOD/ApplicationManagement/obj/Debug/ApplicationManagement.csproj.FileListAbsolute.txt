@@ -89,3 +89,7 @@ C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\Newtonsoft.Json.dll
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\M2Mqtt.Net.pdb
 C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\Newtonsoft.Json.xml
+E:\Faculdade\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\M2Mqtt.Net.dll
+E:\Faculdade\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\Newtonsoft.Json.dll
+E:\Faculdade\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\M2Mqtt.Net.pdb
+E:\Faculdade\SOMIOD\Project\SOMIOD\ApplicationManagement\bin\Debug\Newtonsoft.Json.xml

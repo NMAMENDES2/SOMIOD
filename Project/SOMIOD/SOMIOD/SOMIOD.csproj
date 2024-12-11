@@ -109,6 +109,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="Utils\DBTransactions.cs" />
+    <Compile Include="Utils\RequestData.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

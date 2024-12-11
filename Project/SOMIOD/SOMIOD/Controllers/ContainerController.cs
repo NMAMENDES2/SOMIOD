@@ -13,6 +13,9 @@ using System.Xml;
 using System.Xml.Serialization;
 using SOMIOD.Models;
 using uPLibrary.Networking.M2Mqtt;
+using SOMIOD.Utils;
+using System.Reflection;
+using System.Xml.Linq;
 
 namespace SOMIOD.Controllers
 {
@@ -46,37 +49,22 @@ namespace SOMIOD.Controllers
 
         private bool doesContainerBelongToApplication(string application, string container)
         {
-            Application app = null;
-            Container cont = null;
-
             using (SqlConnection conn = new SqlConnection(connstr))
             {
                 conn.Open();
-                string queryApp = @"SELECT * FROM Application where name = @name";
-                using (SqlCommand cmdApp = new SqlCommand(queryApp, conn))
-                {
-                    cmdApp.Parameters.AddWithValue("@name", application);
-                    using (SqlDataReader reader = cmdApp.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            app = new Application
-                            {
-                                id = (int)reader["Id"]
-                            };
-                        }
-                    }
-                }
 
-                string queryContainer = @"SELECT 1 FROM Container WHERE parent = @appID";
+                string query = @"SELECT COUNT(1)
+                FROM Application AS app
+                INNER JOIN Container AS cont ON cont.parent = app.Id
+                WHERE app.name = @name AND cont.name = @containerName";
 
-                using (SqlCommand cmdContainer = new SqlCommand(queryContainer, conn))
-                {
-                    cmdContainer.Parameters.AddWithValue("@appID", app.id);
-                    using (SqlDataReader readerContainer = cmdContainer.ExecuteReader())
-                    {
-                        return readerContainer.HasRows;
-                    }
+                using (SqlCommand cmd = new SqlCommand(query, conn)) {
+                    cmd.Parameters.AddWithValue("@name", application);
+                    cmd.Parameters.AddWithValue("@containerName", container);
+
+                    int result = (int)cmd.ExecuteScalar();
+
+                    return result > 0;
                 }
 
 
@@ -102,17 +90,33 @@ namespace SOMIOD.Controllers
 
             }
         }
-        private string getUniqueName(string name)
-        {
-            if (doesApplicationExist(name))
-            {
-                return Guid.NewGuid().ToString();
+
+        private bool isEndpointValid(string endpoint) {
+            string pattern = @"^(?:https?://|mqtt:/)?([\w.-]+)$";
+            Regex regex = new Regex(pattern);
+
+            Match match = regex.Match(endpoint);
+
+            if (match.Success) {
+                string cleanEndpoint = match.Groups[1].Value;
+
+                try
+                {
+                    Dns.GetHostEntry(cleanEndpoint);
+                    return true;
+                }
+                catch {
+                    return false;
+                }
             }
-            else
-            {
-                return name;
-            }
+
+            return false;
         }
+        private string getUniqueName()
+        {
+            return Guid.NewGuid().ToString();
+        }
+
         private bool doesContainerExist(string name)
         {
             using (SqlConnection conn = new SqlConnection(connstr))
@@ -148,24 +152,21 @@ namespace SOMIOD.Controllers
             };
 
             Container cont = null;
-            var isApplication = doesApplicationExist(application);
-            if (!isApplication)
+            if (!(DBTransactions.nameExists(application, "Application")))
             {
                 response = Request.CreateResponse(HttpStatusCode.NotFound, "Application does not exist");
                 return response;
             }
 
-            var isContainer = doesContainerExist(container);
-            if (!isContainer)
+            if (!DBTransactions.nameExists(container, "Container"))
             {
                 response = Request.CreateResponse(HttpStatusCode.NotFound, "Container does not exist");
                 return response;
             }
 
-            var isBelong = doesContainerBelongToApplication(application, container);
-            if (!isBelong)
+            if (!DBTransactions.doesContainerBelongToApplication(application, container))
             {
-                response = Request.CreateResponse(HttpStatusCode.BadRequest, "No container named " + container + " on that application");
+                response = Request.CreateResponse(HttpStatusCode.BadRequest, $"No container named {container} on application {application}");
                 return response;
             }
 
@@ -335,46 +336,43 @@ namespace SOMIOD.Controllers
             }
         }
 
-        // Feito acho eu
-
+        // Controller put container
         [Route("{application}/{container}")]
         [HttpPut]
-        public HttpResponseMessage Update(string application, string container)
+        public HttpResponseMessage UpdateContainer(string application, string container)
         {
             HttpResponseMessage response;
-            byte[] bytes;
 
-            var isValid = doesApplicationExist(application);
-            if (!isValid)
-            {
-                response = Request.CreateResponse(HttpStatusCode.NotFound, "Application does not exist");
-                return response;
-            }
-
-            var isBelong = doesContainerBelongToApplication(application, container);
-            if (!isBelong)
-            {
-                response = Request.CreateResponse(HttpStatusCode.BadRequest, "No container named " + container + " on that application");
-                return response;
-            }
-
-            using (Stream stream = Request.Content.ReadAsStreamAsync().Result)
-            {
-                using (MemoryStream memoryStream = new MemoryStream())
-                {
-                    stream.CopyTo(memoryStream);
-                    bytes = memoryStream.ToArray();
-                }
-            }
+            // Dados do pedido e validação
+            byte[] bytes = RequestData.getRequestContenta(Request);
 
             if (bytes == null || bytes.Length == 0)
             {
-                response = Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Couldn't process any data");
-                return response;
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Couldn't process any data");
+            }
+
+
+            // Validar nome da aplicação
+            if (!DBTransactions.nameExists(application, "Application"))
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, "Application does not exist");
+            }
+
+            // Validar nome do container
+            if(!DBTransactions.nameExists(container, "Container"))
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, "Container does not exist");
+            }
+
+            // validar se o container pertence à aplicação
+            if (!DBTransactions.doesContainerBelongToApplication(application, container))
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, $"No container named {container} on application {application}");
             }
 
             string xmlContent = Encoding.UTF8.GetString(bytes);
             XmlDocument doc = new XmlDocument();
+
             try
             {
                 doc.LoadXml(xmlContent);
@@ -383,70 +381,65 @@ namespace SOMIOD.Controllers
                 XmlNode resNode = doc.SelectSingleNode("/request/res_type");
                 string name;
 
+                // Validar root element
                 if (root == null || root.Name != "request")
                 {
-                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid root element. Expecting <request>");
-                    return response;
-
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid root element. Expecting <request>");
                 }
+
+                // Validar name
                 if (nameNode != null && !string.IsNullOrWhiteSpace(nameNode.InnerText))
                 {
                     name = nameNode.InnerText;
                 }
-                else
-                {
-                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "No name to update");
-                    return response;
+                else { 
+                    name = getUniqueName();
                 }
 
-
-                if (resNode.InnerText == "container")
+                if(!resNode.InnerText.Equals("container", StringComparison.OrdinalIgnoreCase))
                 {
-                    try
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
+                }
+
+                    using (SqlConnection conn = new SqlConnection(connstr))
                     {
-                        using (SqlConnection conn = new SqlConnection(connstr))
+                        conn.Open();
+                        string query = "UPDATE Container SET name = @name WHERE name = @namePrev";
+                        using (SqlCommand cmd = new SqlCommand(query, conn))
                         {
-                            conn.Open();
-                            string query = "UPDATE Container SET name = @name WHERE name = @namePrev";
-                            using (SqlCommand cmd = new SqlCommand(query, conn))
+                            cmd.Parameters.AddWithValue("@name", name);
+                            cmd.Parameters.AddWithValue("@namePrev", container);
+                            int rows = cmd.ExecuteNonQuery();
+                            if (rows > 0)
                             {
-                                cmd.Parameters.AddWithValue("@name", name);
-                                cmd.Parameters.AddWithValue("@namePrev", container);
-                                int rows = cmd.ExecuteNonQuery();
-                                if (rows > 0)
-                                {
-                                    response = Request.CreateResponse(HttpStatusCode.OK, "Container Updated!");
-                                    return response;
-                                }
-                                else
-                                {
-                                    response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Container does not exist");
-                                    return response;
-                                }
+                                response = Request.CreateResponse(HttpStatusCode.OK, "Container Updated!");
+                                return response;
+                            }
+                            else
+                            {
+                                response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Container does not exist");
+                                return response;
                             }
                         }
-                    }
-                    catch (SqlException Ex)
-                    {
-                        if (Ex.Number == 2627)
-                        {
-                            response = Request.CreateResponse(HttpStatusCode.BadRequest, "Container name already exists");
-                            return response;
-                        }
-                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
-                        return response;
-                    }
-                }
-                else
-                {
-                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
-                    return response;
                 }
             }
-            catch (XmlException ex)
+            catch (SqlException Ex)
             {
-                response = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-                return response;
+                if (Ex.Number == 2627)
+                {
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Container name already exists");
+                }
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
+            }
+
+            catch (XmlException Ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, Ex.Message);
+            }
+
+            catch (Exception Ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, Ex.Message);
             }
         }
 
@@ -460,18 +453,14 @@ namespace SOMIOD.Controllers
             HttpResponseMessage response;
             byte[] bytes;
 
-            var isValid = doesApplicationExist(application);
-            if (!isValid)
+            if (!DBTransactions.nameExists(application, "Application"))
             {
-                response = Request.CreateResponse(HttpStatusCode.NotFound, "Application does not exist");
-                return response;
+                return Request.CreateResponse(HttpStatusCode.NotFound, "Application does not exist");
             }
 
-            var isBelong = doesContainerBelongToApplication(application, container);
-            if (!isBelong)
+            if (!DBTransactions.doesContainerBelongToApplication(application, container))
             {
-                response = Request.CreateResponse(HttpStatusCode.BadRequest, "No container named " + container + " on that application");
-                return response;
+                return Request.CreateResponse(HttpStatusCode.BadRequest, $"No container named {container} on application {application}");
             }
 
             try
@@ -497,8 +486,7 @@ namespace SOMIOD.Controllers
             catch (SqlException Ex)
             {
 
-                response = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, Ex.Message);
-                return response;
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, Ex.Message);
             }
         }
 
@@ -507,47 +495,31 @@ namespace SOMIOD.Controllers
         public HttpResponseMessage CreateRecordOrNotificationOnContainer(string application, string container)
         {
             HttpResponseMessage response;
-            byte[] bytes;
-
-            var isApplication = doesApplicationExist(application);
-            if (!isApplication)
-            {
-                response = Request.CreateResponse(HttpStatusCode.BadRequest, "Application does not exist");
-                return response;
-            }
-
-            var isContainer = doesContainerExist(container);
-            if (!isContainer)
-            {
-                response = Request.CreateResponse(HttpStatusCode.BadRequest, "Container does not exist");
-                return response;
-            }
-
-            var isBelong = doesContainerBelongToApplication(application, container);
-            if (!isBelong)
-            {
-                response = Request.CreateResponse(HttpStatusCode.BadRequest, "Container does not belong to that application");
-                return response;
-            }
-
-
-            using (Stream stream = Request.Content.ReadAsStreamAsync().Result)
-            {
-                using (MemoryStream memoryStream = new MemoryStream())
-                {
-                    stream.CopyTo(memoryStream);
-                    bytes = memoryStream.ToArray();
-                }
-            }
+            byte[] bytes = RequestData.getRequestContenta(Request);
 
             if (bytes == null || bytes.Length == 0)
             {
-                response = Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Couldn't process any data");
-                return response;
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Couldn't process any data");
+            }
+
+            if (!DBTransactions.nameExists(application, "Application"))
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "Application does not exist");
+            }
+
+            if (!DBTransactions.nameExists(container, "Container"))
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "Container does not exist");
+            }
+
+            if (!DBTransactions.doesContainerBelongToApplication(application, container))
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, "No container named " + container + " on that application");
             }
 
             string xmlContent = Encoding.UTF8.GetString(bytes);
             XmlDocument doc = new XmlDocument();
+
             try
             {
                 doc.LoadXml(xmlContent);
@@ -558,8 +530,7 @@ namespace SOMIOD.Controllers
 
                 if (root == null || root.Name != "request")
                 {
-                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid root element. Expecting <request>");
-                    return response;
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid root element. Expecting <request>");
                 }
 
                 if (nameNode != null && !string.IsNullOrWhiteSpace(nameNode.InnerText))
@@ -568,28 +539,25 @@ namespace SOMIOD.Controllers
                 }
                 else
                 {
-                    name = getUniqueName(Guid.NewGuid().ToString());
+                    name = getUniqueName();
                 }
 
 
                 if (resNode == null)
                 {
-                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting res_type");
-                    return response;
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting res_type");
                 }
 
 
                 if (resNode.InnerText == "record")
                 {
-                    MqttClient mqttClient;
                     string[] topics = { container };
-                    mqttClient = new MqttClient("127.0.0.1");
+                    List<string> endpoints = new List<string>();
 
                     XmlNode contentNode = doc.SelectSingleNode("/request/content");
                     if (contentNode == null)
                     {
-                        response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting content");
-                        return response;
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting content");
                     }
 
                     try
@@ -599,23 +567,35 @@ namespace SOMIOD.Controllers
                             conn.Open();
                             string query = "INSERT INTO Record (name, parent, content) VALUES (@name, @parent, @content)";
                             string querynotif = "SELECT * FROM Notification";
-                            mqttClient.Connect(Guid.NewGuid().ToString());
                             using (SqlCommand cmdNotif = new SqlCommand(querynotif, conn))
                             {
                                 SqlDataReader reader = cmdNotif.ExecuteReader();
                                 while (reader.Read())
                                 {
-                                    Notification notification = new Notification
-                                    {
-                                        @event = (int)reader["event"]
-                                    };
+                                    Notification notification = new Notification();
+                                    notification.@event = (int)reader["event"];
                                     if (notification.@event == 1) {
-                                        
-                                        //mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes(contentNode.InnerText));
-                                        
+                                        string endpoint = (string)reader["endpoint"];
+                                        if (isEndpointValid(endpoint)) { 
+                                           endpoints.Add(endpoint);
+                                        }
                                     }
                                 }
                                 reader.Close();
+                            }
+
+                            foreach (string endpoint in endpoints) {
+                                MqttClient mqttClient;
+                                try
+                                {
+                                    mqttClient = new MqttClient(endpoint);
+                                    mqttClient.Connect(Guid.NewGuid().ToString());
+                                    mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes(contentNode.InnerText));
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine(ex.Message);
+                                }
                             }
                             using (SqlCommand cmd = new SqlCommand(query, conn))
                             {
@@ -626,7 +606,6 @@ namespace SOMIOD.Controllers
                                 if (rows > 0)
                                 {
                                     response = Request.CreateResponse(HttpStatusCode.OK, "Record Created!");
-                                    mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes(contentNode.InnerText));
                                     return response;
                                 }
                                 else
@@ -641,11 +620,9 @@ namespace SOMIOD.Controllers
                     {
                         if (Ex.Number == 2627)
                         {
-                            response = Request.CreateResponse(HttpStatusCode.BadRequest, "Record already exists");
-                            return response;
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, "Record already exists");
                         }
-                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
-                        return response;
+                        return Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
                     }
                 }
 
@@ -659,14 +636,12 @@ namespace SOMIOD.Controllers
 
                     if (endPointNode == null)
                     {
-                        response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting endpoint");
-                        return response;
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting endpoint");
                     }
 
                     if (eventNode == null)
                     {
-                        response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting event");
-                        return response;
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting event");
                     }
 
                     if (enabledNode == null)
@@ -680,8 +655,7 @@ namespace SOMIOD.Controllers
 
                     if ((eventNode.InnerText != "1" && eventNode.InnerText != "2"))
                     {
-                        response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting values 1 or 2 for the event");
-                        return response;
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting values 1 or 2 for the event");
                     }
 
 
@@ -701,13 +675,11 @@ namespace SOMIOD.Controllers
                                 int rows = cmd.ExecuteNonQuery();
                                 if (rows > 0)
                                 {
-                                    response = Request.CreateResponse(HttpStatusCode.OK, "Notification Created!");
-                                    return response;
+                                    return Request.CreateResponse(HttpStatusCode.OK, "Notification Created!");
                                 }
                                 else
                                 {
-                                    response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Error creating the notification");
-                                    return response;
+                                    return Request.CreateResponse(HttpStatusCode.InternalServerError, "Error creating the notification");
                                 }
                             }
                         }
@@ -716,25 +688,21 @@ namespace SOMIOD.Controllers
                     {
                         if (Ex.Number == 2627)
                         {
-                            response = Request.CreateResponse(HttpStatusCode.BadRequest, "Notification already exists");
-                            return response;
+                            return Request.CreateResponse(HttpStatusCode.BadRequest, "Notification already exists");
                         }
-                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
-                        return response;
+                        return Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
                     }
 
 
                 }
                 else
                 {
-                    response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
-                    return response;
+                    return Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
                 }
             }
             catch (XmlException ex)
             {
-                response = Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
-                return response;
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
     }
