@@ -20,10 +20,16 @@ using System.Diagnostics.Eventing.Reader;
 
 namespace SOMIOD.Controllers
 {
+    /// <summary>
+    /// define o prefixo para as rotas da API
+    /// </summary>
     [RoutePrefix("api/somiod")]
     public class ContainerController : ApiController
     {
         string connstr = Properties.Settings.Default.ConString;
+        /// <summary>
+        /// obtem o id do container baseado no nome
+        /// </summary>
         private int getParentID(string name)
         {
             Container container = null;
@@ -45,9 +51,62 @@ namespace SOMIOD.Controllers
 
                 }
             }
+            // retorna -1 no caso de não encontrar nenhum container
+            if (container == null)
+            {
+                return -1;
+            }
             return container.id;
         }
 
+        /// <summary>
+        /// valida se a app existe na BD
+        /// </summary>
+        private bool doesApplicationExist(string name)
+        {
+            using (SqlConnection conn = new SqlConnection(connstr))
+            {
+                conn.Open();
+                string query = "SELECT * FROM Application WHERE name = @name";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", name);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        return reader.HasRows;
+
+                    }
+                }
+
+            }
+        }
+
+
+        /// <summary>
+        /// verifica se um conteiner existe na BD
+        /// </summary>
+        private bool doesContainerExist(string name)
+        {
+            using (SqlConnection conn = new SqlConnection(connstr))
+            {
+                conn.Open();
+                string query = "SELECT * FROM Container WHERE name = @name";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@name", name);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        return reader.HasRows;
+
+                    }
+                }
+
+            }
+        }
+
+        /// <summary>
+        /// verifica se o conteiner pertence à app
+        /// </summary>
         private bool doesContainerBelongToApplication(string application, string container)
         {
             using (SqlConnection conn = new SqlConnection(connstr))
@@ -72,25 +131,9 @@ namespace SOMIOD.Controllers
 
         }
 
-        private bool doesApplicationExist(string name)
-        {
-            using (SqlConnection conn = new SqlConnection(connstr))
-            {
-                conn.Open();
-                string query = "SELECT * FROM Application WHERE name = @name";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@name", name);
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        return reader.HasRows;
-
-                    }
-                }
-
-            }
-        }
-
+        /// <summary>
+        /// valida se o endpoint é valido
+        /// </summary>
         private bool isEndpointValid(string endpoint)
         {
             string pattern = @"^(?:https?://|mqtt:/)?([\w.-]+)$";
@@ -116,6 +159,9 @@ namespace SOMIOD.Controllers
             return false;
         }
 
+        /// <summary>
+        /// verifica se o hostname fornecido é valido
+        /// </summary>
         private bool IsValidHostname(string hostname)
         {
             string hostnamePattern = @"^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$";
@@ -134,29 +180,12 @@ namespace SOMIOD.Controllers
 
             return Regex.IsMatch(hostname, hostnamePattern);
         }
+
         private string getUniqueName()
         {
             return Guid.NewGuid().ToString();
         }
 
-        private bool doesContainerExist(string name)
-        {
-            using (SqlConnection conn = new SqlConnection(connstr))
-            {
-                conn.Open();
-                string query = "SELECT * FROM Container WHERE name = @name";
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@name", name);
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        return reader.HasRows;
-
-                    }
-                }
-
-            }
-        }
 
         // Feito acho eu
 
