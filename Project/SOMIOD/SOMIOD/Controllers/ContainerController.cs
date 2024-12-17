@@ -17,6 +17,7 @@ using SOMIOD.Utils;
 using System.Reflection;
 using System.Xml.Linq;
 using System.Diagnostics.Eventing.Reader;
+using Swashbuckle.Swagger;
 
 namespace SOMIOD.Controllers
 {
@@ -186,9 +187,11 @@ namespace SOMIOD.Controllers
             return Guid.NewGuid().ToString();
         }
 
+        #region CRUD's
 
-        // Feito acho eu
-
+        // <summary>
+        /// obtém informações sobre um conteiner
+        /// </summary>
         [Route("{application}/{container}")]
         [HttpGet]
         public HttpResponseMessage GetContainer(string application, string container)
@@ -204,25 +207,15 @@ namespace SOMIOD.Controllers
             };
 
             Container cont = null;
-            if (!(DBTransactions.nameExists(application, "Application")))
+            // Chama a função de validação
+            response = ValidateApplicationAndContainer(application, container);
+            if (response != null)
             {
-                response = Request.CreateResponse(HttpStatusCode.NotFound, "Application does not exist");
-                return response;
-            }
-
-            if (!DBTransactions.nameExists(container, "Container"))
-            {
-                response = Request.CreateResponse(HttpStatusCode.NotFound, "Container does not exist");
-                return response;
-            }
-
-            if (!DBTransactions.doesContainerBelongToApplication(application, container))
-            {
-                response = Request.CreateResponse(HttpStatusCode.BadRequest, $"No container named {container} on application {application}");
                 return response;
             }
 
 
+            // obtem os dados do container da BD
             using (SqlConnection connection = new SqlConnection(connstr))
             {
                 connection.Open();
@@ -248,8 +241,10 @@ namespace SOMIOD.Controllers
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Container not found.");
             }
 
+            // verifica cabeçalho somiod-locate para decidir o tipo de resposta a dar
             var headers = HttpContext.Current.Request.Headers;
             string somiodLocate = headers.Get("somiod-locate");
+            // caso seja do tipo record
             if (somiodLocate == "record")
             {
                 var records = new List<Record>();
@@ -309,6 +304,7 @@ namespace SOMIOD.Controllers
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
                 }
             }
+            // casp seja do tipo notification
             else if (somiodLocate == "notification")
             {
 
@@ -372,6 +368,7 @@ namespace SOMIOD.Controllers
                     return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
                 }
             }
+            // caso contrário retorna os dados do container
             try
             {
                 using (var writer = XmlWriter.Create(responseXml, settings))
@@ -395,8 +392,9 @@ namespace SOMIOD.Controllers
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
-
-        // Controller put container
+        /// <summary>
+        /// método PUT 
+        /// </summary>
         [Route("{application}/{container}")]
         [HttpPut]
         public HttpResponseMessage UpdateContainer(string application, string container)
@@ -411,24 +409,14 @@ namespace SOMIOD.Controllers
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Couldn't process any data");
             }
 
-
-            // Validar nome da aplicação
-            if (!DBTransactions.nameExists(application, "Application"))
+            // Chama a função de validação
+            // Chama a função de validação
+            response = ValidateApplicationAndContainer(application, container);
+            if (response != null)
             {
-                return Request.CreateResponse(HttpStatusCode.NotFound, "Application does not exist");
+                return response;
             }
 
-            // Validar nome do container
-            if (!DBTransactions.nameExists(container, "Container"))
-            {
-                return Request.CreateResponse(HttpStatusCode.NotFound, "Container does not exist");
-            }
-
-            // validar se o container pertence à aplicação
-            if (!DBTransactions.doesContainerBelongToApplication(application, container))
-            {
-                return Request.CreateResponse(HttpStatusCode.NotFound, $"No container named {container} on application {application}");
-            }
 
             string xmlContent = Encoding.UTF8.GetString(bytes);
             XmlDocument doc = new XmlDocument();
@@ -504,23 +492,22 @@ namespace SOMIOD.Controllers
             }
         }
 
-
-        // Feito acho eu
-
+        /// <summary>
+        /// método DELETE do container
+        /// </summary>
         [Route("{application}/{container}")]
         [HttpDelete]
         public HttpResponseMessage Delete(string application, string container)
         {
+            HttpResponseMessage response;
 
-            if (!DBTransactions.nameExists(application, "Application"))
+            // Chama a função de validação
+            response = ValidateApplicationAndContainer(application, container);
+            if (response != null)
             {
-                return Request.CreateResponse(HttpStatusCode.NotFound, "Application does not exist");
+                return response;
             }
 
-            if (!DBTransactions.doesContainerBelongToApplication(application, container))
-            {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, $"No container named {container} on application {application}");
-            }
 
             try
             {
@@ -551,6 +538,9 @@ namespace SOMIOD.Controllers
             }
         }
 
+        /// <summary>
+        /// método POST do container
+        /// </summary>
         [HttpPost]
         [Route("{application}/{container}")]
         public HttpResponseMessage CreateRecordOrNotificationOnContainer(string application, string container)
@@ -562,21 +552,13 @@ namespace SOMIOD.Controllers
             {
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Couldn't process any data");
             }
-
-            if (!DBTransactions.nameExists(application, "Application"))
+            // Chama a função de validação
+            response = ValidateApplicationAndContainer(application, container);
+            if (response != null)
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, "Application does not exist");
+                return response;
             }
 
-            if (!DBTransactions.nameExists(container, "Container"))
-            {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, "Container does not exist");
-            }
-
-            if (!DBTransactions.doesContainerBelongToApplication(application, container))
-            {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, "No container named " + container + " on that application");
-            }
 
             string xmlContent = Encoding.UTF8.GetString(bytes);
             XmlDocument doc = new XmlDocument();
@@ -773,5 +755,37 @@ namespace SOMIOD.Controllers
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
             }
         }
+        #endregion 
+
+        /// <summary>
+        /// valida a app, o container e se o container pertence à app
+        /// </summary>
+        /// <param name="application"></param>
+        /// <param name="container"></param>
+        /// <returns> se der erro retorna um http response e se estiver tudo ok manda null</returns>
+        private HttpResponseMessage ValidateApplicationAndContainer(string application, string container)
+        {
+            // Verifica se a aplicação existe
+            if (!(DBTransactions.nameExists(application, "Application")))
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, "Application does not exist");
+            }
+
+            // Verifica se o container existe
+            if (!DBTransactions.nameExists(container, "Container"))
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, "Container does not exist");
+            }
+
+            // Verifica se o container pertence à aplicação
+            if (!DBTransactions.doesContainerBelongToApplication(application, container))
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, $"No container named {container} on application {application}");
+            }
+
+            // Se todas as verificações passarem, retorna null (sem erro)
+            return null;
+        }
+
     }
 }

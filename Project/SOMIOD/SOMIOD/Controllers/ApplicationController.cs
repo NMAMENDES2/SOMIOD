@@ -102,7 +102,7 @@ namespace SOMIOD.Controllers
         [Route("")]
         [HttpPost]
         public HttpResponseMessage CreateApplication()
-        {
+       {
             HttpResponseMessage response;
             byte[] bytes;
 
