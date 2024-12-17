@@ -594,22 +594,20 @@ namespace SOMIOD.Controllers
                                     Notification notification = new Notification();
                                     notification.@event = (int)reader["event"];
                                     notification.enabled = (bool)reader["enabled"];
-<<<<<<< HEAD
-                                    if (notification.@event == 1 && notification.enabled) {
-=======
                                     if (notification.@event == 1 && notification.enabled)
                                     {
->>>>>>> b36ed38ec3597e7227428199d30f5b4bae81a7d9
                                         string endpoint = (string)reader["endpoint"];
-                                        if (isEndpointValid(endpoint)) { 
-                                           endpoints.Add(endpoint);
+                                        if (isEndpointValid(endpoint))
+                                        {
+                                            endpoints.Add(endpoint);
                                         }
                                     }
                                 }
                                 reader.Close();
                             }
 
-                            foreach (string endpoint in endpoints) {
+                            foreach (string endpoint in endpoints)
+                            {
                                 MqttClient mqttClient;
                                 try
                                 {
@@ -681,7 +679,7 @@ namespace SOMIOD.Controllers
                     {
                         return Request.CreateResponse(HttpStatusCode.BadRequest, "Bad enabled value");
                     }
-                    
+
 
                     if ((eventNode.InnerText != "1" && eventNode.InnerText != "2"))
                     {
