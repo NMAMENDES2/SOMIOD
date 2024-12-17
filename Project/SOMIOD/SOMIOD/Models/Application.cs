@@ -7,7 +7,7 @@ using System.Xml.Serialization;
 
 namespace SOMIOD.Models
 {
-    [XmlRoot("application")]
+    [XmlRoot("request")]
     public class Application
     {
         [XmlElement("id")]

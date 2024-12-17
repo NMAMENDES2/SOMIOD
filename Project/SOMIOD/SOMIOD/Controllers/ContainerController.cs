@@ -59,7 +59,8 @@ namespace SOMIOD.Controllers
                 INNER JOIN Container AS cont ON cont.parent = app.Id
                 WHERE app.name = @name AND cont.name = @containerName";
 
-                using (SqlCommand cmd = new SqlCommand(query, conn)) {
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
                     cmd.Parameters.AddWithValue("@name", application);
                     cmd.Parameters.AddWithValue("@containerName", container);
 
@@ -167,7 +168,8 @@ namespace SOMIOD.Controllers
             HttpResponseMessage response;
 
             var responseXml = new StringWriter();
-            var settings = new XmlWriterSettings { 
+            var settings = new XmlWriterSettings
+            {
                 OmitXmlDeclaration = true,
                 Indent = true
             };
@@ -228,21 +230,25 @@ namespace SOMIOD.Controllers
                     {
                         connection.Open();
                         string query = "SELECT * FROM Record WHERE parent = @parent";
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        cmd.Parameters.AddWithValue("@parent", cont.id);
-                        SqlDataReader registos = cmd.ExecuteReader();
-                        while (registos.Read())
+                        using (SqlCommand cmd = new SqlCommand(query, connection))
                         {
-                            Record record = new Record
+                            cmd.Parameters.AddWithValue("@parent", cont.id);
+                            using (SqlDataReader registos = cmd.ExecuteReader())
                             {
-                                id = (int)registos["id"],
-                                name = (string)registos["name"],
-                                creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"],
-                                parent = (int)registos["parent"],
-                                content = (string)registos["content"],
+                                while (registos.Read())
+                                {
+                                    Record record = new Record
+                                    {
+                                        id = (int)registos["id"],
+                                        name = (string)registos["name"],
+                                        creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"],
+                                        parent = (int)registos["parent"],
+                                        content = (string)registos["content"],
 
-                            };
-                            records.Add(record);
+                                    };
+                                    records.Add(record);
+                                }
+                            }
                         }
                     }
                     using (var writer = XmlWriter.Create(responseXml, settings))
@@ -284,22 +290,26 @@ namespace SOMIOD.Controllers
                     {
                         connection.Open();
                         string query = "SELECT * FROM Notification WHERE parent = @parent";
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        cmd.Parameters.AddWithValue("@parent", cont.id);
-                        SqlDataReader registos = cmd.ExecuteReader();
-                        while (registos.Read())
+                        using (SqlCommand cmd = new SqlCommand(query, connection))
                         {
-                            Notification notification = new Notification
-                           {
-                                id = (int)registos["id"],
-                                name = (string)registos["name"],
-                                creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"],
-                                parent = (int)registos["parent"],
-                                @event = (int)registos["event"],
-                                endpoint = (string)registos["endpoint"],
-                                enabled = (bool)registos["enabled"],
-                            };
-                            notifs.Add(notification);
+                            cmd.Parameters.AddWithValue("@parent", cont.id);
+                            using (SqlDataReader registos = cmd.ExecuteReader())
+                            {
+                                while (registos.Read())
+                                {
+                                    Notification notification = new Notification
+                                    {
+                                        id = (int)registos["id"],
+                                        name = (string)registos["name"],
+                                        creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"],
+                                        parent = (int)registos["parent"],
+                                        @event = (int)registos["event"],
+                                        endpoint = (string)registos["endpoint"],
+                                        enabled = (bool)registos["enabled"],
+                                    };
+                                    notifs.Add(notification);
+                                }
+                            }
                         }
                     }
                     using (var writer = XmlWriter.Create(responseXml, settings))
@@ -380,7 +390,7 @@ namespace SOMIOD.Controllers
             }
 
             // Validar nome do container
-            if(!DBTransactions.nameExists(container, "Container"))
+            if (!DBTransactions.nameExists(container, "Container"))
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, "Container does not exist");
             }
@@ -413,35 +423,36 @@ namespace SOMIOD.Controllers
                 {
                     name = nameNode.InnerText;
                 }
-                else { 
+                else
+                {
                     name = getUniqueName();
                 }
 
-                if(!resNode.InnerText.Equals("container", StringComparison.OrdinalIgnoreCase))
+                if (!resNode.InnerText.Equals("container", StringComparison.OrdinalIgnoreCase))
                 {
                     return Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
                 }
 
-                    using (SqlConnection conn = new SqlConnection(connstr))
+                using (SqlConnection conn = new SqlConnection(connstr))
+                {
+                    conn.Open();
+                    string query = "UPDATE Container SET name = @name WHERE name = @namePrev";
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        conn.Open();
-                        string query = "UPDATE Container SET name = @name WHERE name = @namePrev";
-                        using (SqlCommand cmd = new SqlCommand(query, conn))
+                        cmd.Parameters.AddWithValue("@name", name);
+                        cmd.Parameters.AddWithValue("@namePrev", container);
+                        int rows = cmd.ExecuteNonQuery();
+                        if (rows > 0)
                         {
-                            cmd.Parameters.AddWithValue("@name", name);
-                            cmd.Parameters.AddWithValue("@namePrev", container);
-                            int rows = cmd.ExecuteNonQuery();
-                            if (rows > 0)
-                            {
-                                response = Request.CreateResponse(HttpStatusCode.OK, "Container Updated!");
-                                return response;
-                            }
-                            else
-                            {
-                                response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Container does not exist");
-                                return response;
-                            }
+                            response = Request.CreateResponse(HttpStatusCode.OK, "Container Updated!");
+                            return response;
                         }
+                        else
+                        {
+                            response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Container does not exist");
+                            return response;
+                        }
+                    }
                 }
             }
             catch (SqlException Ex)
@@ -489,14 +500,16 @@ namespace SOMIOD.Controllers
                     connection.Open();
 
                     string query = "DELETE FROM Container WHERE name = @name";
-                    SqlCommand cmd = new SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@name", container);
-
-                    int rowsAffected = cmd.ExecuteNonQuery();
-
-                    if (rowsAffected == 0)
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
-                        return Request.CreateResponse(HttpStatusCode.NotFound, "Container not found.");
+                        cmd.Parameters.AddWithValue("@name", container);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected == 0)
+                        {
+                            return Request.CreateResponse(HttpStatusCode.NotFound, "Container not found.");
+                        }
                     }
                 }
 
@@ -720,8 +733,6 @@ namespace SOMIOD.Controllers
                         }
                         return Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
                     }
-
-
                 }
                 else
                 {
@@ -734,6 +745,4 @@ namespace SOMIOD.Controllers
             }
         }
     }
-
-
 }

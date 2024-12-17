@@ -127,8 +127,6 @@ namespace SOMIOD.Controllers
                         return readerContainer.HasRows;
                     }
                 }
-
-
             }
         }
         private bool doesRecordBelongToContainer(string container, string record)
@@ -164,8 +162,6 @@ namespace SOMIOD.Controllers
                         return readerContainer.HasRows;
                     }
                 }
-
-
             }
         }
 
@@ -307,23 +303,26 @@ namespace SOMIOD.Controllers
                 {
                     connection.Open();
                     string query = "SELECT id, name, parent, content FROM Record WHERE name = @name";
-                    SqlCommand cmd = new SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@name", record);
-
-                    SqlDataReader reader = cmd.ExecuteReader();
-                    if (!reader.Read())
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
-                        response = Request.CreateResponse(HttpStatusCode.BadRequest, "Notification not found");
-                        return response;
+                        cmd.Parameters.AddWithValue("@name", record);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read())
+                            {
+                                response = Request.CreateResponse(HttpStatusCode.BadRequest, "Notification not found");
+                                return response;
+                            }
+                            rec = new Record
+                            {
+                                id = (int)reader["id"],
+                                name = reader["name"].ToString(),
+                                parent = (int)reader["parent"],
+                                content = (string)reader["content"],
+                            };
+                        }
                     }
-                    rec = new Record
-                    {
-                        id = (int)reader["id"],
-                        name = reader["name"].ToString(),
-                        parent = (int)reader["parent"],
-                        content = (string)reader["content"],
-                    };
-
                 }
                 {
                     using (var writer = XmlWriter.Create(responseXml, settings))
@@ -398,26 +397,29 @@ namespace SOMIOD.Controllers
                 {
                     connection.Open();
                     string query = "SELECT id, name, parent, event, endpoint, enabled FROM Notification WHERE name = @name";
-                    SqlCommand cmd = new SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@name", notification);
-
-                    SqlDataReader reader = cmd.ExecuteReader();
-                    if (!reader.Read())
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
-                        response = Request.CreateResponse(HttpStatusCode.BadRequest, "Notification not found");
-                        return response;
+                        cmd.Parameters.AddWithValue("@name", notification);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read())
+                            {
+                                response = Request.CreateResponse(HttpStatusCode.BadRequest, "Notification not found");
+                                return response;
+                            }
+                            notif = new Notification
+                            {
+                                id = (int)reader["id"],
+                                name = reader["name"].ToString(),
+                                parent = (int)reader["parent"],
+                                @event = (int)reader["event"],
+                                endpoint = (string)reader["endpoint"],
+                                enabled = (bool)reader["enabled"],
+
+                            };
+                        }
                     }
-                    notif = new Notification
-                    {
-                        id = (int)reader["id"],
-                        name = reader["name"].ToString(),
-                        parent = (int)reader["parent"],
-                        @event = (int)reader["event"],
-                        endpoint = (string)reader["endpoint"],
-                        enabled = (bool)reader["enabled"],
-
-                    };
-
                 }
                 {
                     using (var writer = XmlWriter.Create(responseXml, settings))
@@ -502,22 +504,24 @@ namespace SOMIOD.Controllers
                     string querynotif = "SELECT * FROM Notification";
                     using (SqlCommand cmdNotif = new SqlCommand(querynotif, connection))
                     {
-                        SqlDataReader reader = cmdNotif.ExecuteReader();
-                        while (reader.Read())
+                        using (SqlDataReader reader = cmdNotif.ExecuteReader())
                         {
-                            Notification notification = new Notification();
-                            notification.@event = (int)reader["event"];
-                            notification.enabled = (bool)reader["enabled"];
-                            if (notification.@event == 2 && notification.enabled)
+                            while (reader.Read())
                             {
-                                string endpoint = (string)reader["endpoint"];
-                                if (isEndpointValid(endpoint))
+                                Notification notification = new Notification();
+                                notification.@event = (int)reader["event"];
+                                notification.enabled = (bool)reader["enabled"];
+                                if (notification.@event == 2 && notification.enabled)
                                 {
-                                    endpoints.Add(endpoint);
+                                    string endpoint = (string)reader["endpoint"];
+                                    if (isEndpointValid(endpoint))
+                                    {
+                                        endpoints.Add(endpoint);
+                                    }
                                 }
                             }
+                            reader.Close();
                         }
-                        reader.Close();
                     }
 
 
@@ -526,31 +530,35 @@ namespace SOMIOD.Controllers
                     using (SqlCommand cmdRecord = new SqlCommand(queryRecord, connection))
                     {
                         cmdRecord.Parameters.AddWithValue("@name", record.ToLower());
-                        SqlDataReader reader = cmdRecord.ExecuteReader();
-                        if (reader.Read())
+                        using (SqlDataReader reader = cmdRecord.ExecuteReader())
                         {
-                            rec.id = (int)reader["Id"];
-                            rec.name = (string)reader["name"];
-                            rec.content = (string)reader["content"];
-                            rec.creation_datetime = (DateTime)reader["creation_datetime"];
-                        }
-                        else { 
-                            return Request.CreateResponse(HttpStatusCode.NotFound, "Record not found");
-                        }
+                            if (reader.Read())
+                            {
+                                rec.id = (int)reader["Id"];
+                                rec.name = (string)reader["name"];
+                                rec.content = (string)reader["content"];
+                                rec.creation_datetime = (DateTime)reader["creation_datetime"];
+                            }
+                            else
+                            {
+                                return Request.CreateResponse(HttpStatusCode.NotFound, "Record not found");
+                            }
 
-                        reader.Close();
-
+                            reader.Close();
+                        }
                     }
 
                     string query = "DELETE FROM Record WHERE name = @name";
-                    SqlCommand cmd = new SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@name", record);
-
-                    int rowsAffected = cmd.ExecuteNonQuery();
-                    if (rowsAffected == 0)
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
-                        response = Request.CreateResponse(HttpStatusCode.NotFound, "Record not found");
-                        return response;
+                        cmd.Parameters.AddWithValue("@name", record);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected == 0)
+                        {
+                            response = Request.CreateResponse(HttpStatusCode.NotFound, "Record not found");
+                            return response;
+                        }
                     }
                 }
                 using (var writer = XmlWriter.Create(responseXml, settings))
@@ -634,14 +642,16 @@ namespace SOMIOD.Controllers
                 {
                     connection.Open();
                     string query = "DELETE FROM Notification WHERE name = @name";
-                    SqlCommand cmd = new SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@name", notification);
-
-                    int rowsAffected = cmd.ExecuteNonQuery();
-                    if (rowsAffected == 0)
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
-                        response = Request.CreateResponse(HttpStatusCode.NotFound, "Notification not found");
-                        return response;
+                        cmd.Parameters.AddWithValue("@name", notification);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected == 0)
+                        {
+                            response = Request.CreateResponse(HttpStatusCode.NotFound, "Notification not found");
+                            return response;
+                        }
                     }
                 }
 
@@ -654,12 +664,6 @@ namespace SOMIOD.Controllers
                 return response;
             }
         }
-
-
-
-
-
         #endregion
-
     }
 }

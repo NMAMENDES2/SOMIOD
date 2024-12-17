@@ -17,6 +17,7 @@ using System.Xml.Serialization;
 using System.Web.Caching;
 using System.Runtime.InteropServices.WindowsRuntime;
 using SOMIOD.Utils;
+using System.Web.UI.WebControls;
 
 namespace SOMIOD.Controllers
 {
@@ -64,7 +65,6 @@ namespace SOMIOD.Controllers
                             app.id = (int)reader["Id"];
                         }
                     }
-
                 }
             }
             return app.id;
@@ -92,9 +92,9 @@ namespace SOMIOD.Controllers
         [HttpPost]
         public HttpResponseMessage CreateApplication()
         {
-
             HttpResponseMessage response;
             byte[] bytes;
+
             using (Stream stream = Request.Content.ReadAsStreamAsync().Result)
             {
                 using (MemoryStream memoryStream = new MemoryStream())
@@ -135,47 +135,46 @@ namespace SOMIOD.Controllers
                     name = getUniqueName(Guid.NewGuid().ToString());
                 }
 
-                if (resNode.InnerText == "application")
-                {
-                    try
-                    {
-                        using (SqlConnection conn = new SqlConnection(connstr))
-                        {
-                            conn.Open();
-                            string query = "INSERT INTO Application (name) VALUES (@name)";
-                            using (SqlCommand cmd = new SqlCommand(query, conn))
-                            {
-                                cmd.Parameters.AddWithValue("@name", name);
-                                int rows = cmd.ExecuteNonQuery();
-                                if (rows > 0)
-                                {
-                                    response = Request.CreateResponse(HttpStatusCode.OK, "Application Created!");
-                                    return response;
-                                }
-                                else
-                                {
-                                    response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Error creating the application");
-                                    return response;
-                                }
-                            }
-                        }
-                    }
-                    catch (SqlException Ex)
-                    {
-                        if (Ex.Number == 2627)
-                        {
-                            response = Request.CreateResponse(HttpStatusCode.BadRequest, "Application already exists");
-                            return response;
-                        }
-                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
-                        return response;
-                    }
-                }
-                else
+                if (resNode.InnerText != "application")
                 {
                     response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
                     return response;
                 }
+
+                try
+                {
+                    using (SqlConnection conn = new SqlConnection(connstr))
+                    {
+                        conn.Open();
+                        string query = "INSERT INTO Application (name) VALUES (@name)";
+                        using (SqlCommand cmd = new SqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@name", name);
+                            int rows = cmd.ExecuteNonQuery();
+                            if (rows > 0)
+                            {
+                                response = Request.CreateResponse(HttpStatusCode.OK, "Application Created!");
+                                return response;
+                            }
+                            else
+                            {
+                                response = Request.CreateResponse(HttpStatusCode.InternalServerError, "Error creating the application");
+                                return response;
+                            }
+                        }
+                    }
+                }
+                catch (SqlException Ex)
+                {
+                    if (Ex.Number == 2627)
+                    {
+                        response = Request.CreateResponse(HttpStatusCode.BadRequest, "Application already exists");
+                        return response;
+                    }
+                    response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
+                    return response;
+                }
+
             }
             catch (XmlException ex)
             {
@@ -205,11 +204,11 @@ namespace SOMIOD.Controllers
             }
 
             var responseXml = new StringWriter();
-                var settings = new XmlWriterSettings
-                {
-                    OmitXmlDeclaration = true, // remove a declaração <?xml ... ?>
-                    Indent = true
-                };
+            var settings = new XmlWriterSettings
+            {
+                OmitXmlDeclaration = true, // remove a declaração <?xml ... ?>
+                Indent = true
+            };
 
             // Fetch db
             if (somiodLocate == "application")
@@ -220,17 +219,21 @@ namespace SOMIOD.Controllers
                     {
                         connection.Open();
                         string query = "SELECT * FROM Application";
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        SqlDataReader registos = cmd.ExecuteReader();
-                        while (registos.Read())
+                        using (SqlCommand cmd = new SqlCommand(query, connection))
                         {
-                            Application app = new Application
+                            using (SqlDataReader registos = cmd.ExecuteReader())
                             {
-                                id = (int)registos["id"],
-                                name = (string)registos["name"],
-                                creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"]
-                            };
-                            apps.Add(app);
+                                while (registos.Read())
+                                {
+                                    Application app = new Application
+                                    {
+                                        id = (int)registos["id"],
+                                        name = (string)registos["name"],
+                                        creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"]
+                                    };
+                                    apps.Add(app);
+                                }
+                            }
                         }
                     }
 
@@ -269,7 +272,8 @@ namespace SOMIOD.Controllers
                     return response;
                 }
             }
-            else {
+            else
+            {
                 response = Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting value application");
                 return response;
             }
@@ -294,91 +298,76 @@ namespace SOMIOD.Controllers
             var headers = HttpContext.Current.Request.Headers;
             string somiodLocate = headers.Get("somiod-locate");
 
+
             Application app = null;
             using (SqlConnection connection = new SqlConnection(connstr))
             {
                 connection.Open();
-                    string query = "SELECT * FROM Application WHERE name = @name";
-                    SqlCommand cmd = new SqlCommand(query, connection);
+                string query = "SELECT * FROM Application WHERE name = @name";
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
                     cmd.Parameters.AddWithValue("@name", application);
-                    SqlDataReader registos = cmd.ExecuteReader();
-                    if (registos.Read())
+                    using (SqlDataReader registos = cmd.ExecuteReader())
                     {
-                        app = new Application
+                        if (registos.Read())
                         {
-                            id = (int)registos["id"],
-                            name = (string)registos["name"]
-                        };
-                    }
-                }
-
-                if (app == null)
-                {
-                    response = Request.CreateResponse(HttpStatusCode.NotFound, "Application not found.");
-                    return response;
-                }
-                if (somiodLocate == "container")
-                {
-                    var containers = new List<Container>();
-                    try
-                    {
-                        using (SqlConnection connection = new SqlConnection(connstr))
-                        {
-                            connection.Open();
-                            string query = "SELECT * FROM Container WHERE parent = @parent";
-                            SqlCommand cmd = new SqlCommand(query, connection);
-                            cmd.Parameters.AddWithValue("@parent", app.id);
-                            SqlDataReader registos = cmd.ExecuteReader();
-                            while (registos.Read())
+                            app = new Application
                             {
-                                Container container = new Container
-                                {
-                                    id = (int)registos["id"],
-                                    name = (string)registos["name"],
-                                    creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"],
-                                    parent = (int)registos["parent"]
-                                };
-                                containers.Add(container);
-                            }
+                                id = (int)registos["id"],
+                                name = (string)registos["name"]
+                            };
                         }
-                        using (var writer = XmlWriter.Create(responseXml, settings))
-                        {
-                            writer.WriteStartElement("Response"); // personaliza o nó de raiz
-                            foreach (var container in containers)
-                            {
-                                writer.WriteStartElement("Container"); // cada item será representado como um nó <Container> writer.WriteElementString("id", app.id.ToString());
-                                writer.WriteElementString("ID", container.id.ToString());
-                                writer.WriteElementString("name", container.name);
-                                writer.WriteElementString("creation_datetime", container.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
-                                writer.WriteElementString("parent", container.parent.ToString());
-                                writer.WriteEndElement(); // fecha o nó <Container>
-                            }
-                            writer.WriteEndElement(); // fecha o nó de raiz <Containers>
-
-                        }
-
-                        string xmlContent = responseXml.ToString();
-
-                        response = Request.CreateResponse(HttpStatusCode.OK, xmlContent);
-                        response.Content = new StringContent(xmlContent, Encoding.UTF8, "application/xml");
-                        return response;
-
-                    }
-                    catch (Exception Ex)
-                    {
-                        response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
-                        return response;
                     }
                 }
+            }
+
+            if (app == null)
+            {
+                response = Request.CreateResponse(HttpStatusCode.NotFound, "Application not found.");
+                return response;
+            }
+            if (somiodLocate == "container")
+            {
+                var containers = new List<Container>();
                 try
                 {
+                    using (SqlConnection connection = new SqlConnection(connstr))
+                    {
+                        connection.Open();
+                        string query = "SELECT * FROM Container WHERE parent = @parent";
+                        using (SqlCommand cmd = new SqlCommand(query, connection))
+                        {
+                            cmd.Parameters.AddWithValue("@parent", app.id);
+                            using (SqlDataReader registos = cmd.ExecuteReader())
+                            {
+                                while (registos.Read())
+                                {
+                                    Container container = new Container
+                                    {
+                                        id = (int)registos["id"],
+                                        name = (string)registos["name"],
+                                        creation_datetime = registos["creation_datetime"] == DBNull.Value ? DateTime.MinValue : (DateTime)registos["creation_datetime"],
+                                        parent = (int)registos["parent"]
+                                    };
+                                    containers.Add(container);
+                                }
+                            }
+                        }
+                    }
                     using (var writer = XmlWriter.Create(responseXml, settings))
                     {
-                        writer.WriteStartElement("Application"); // personaliza o nó de raiz writer.WriteStartElement("Application"); // cada item será representado como um nó <Container> writer.WriteElementString("id", app.id.ToString());
-                        writer.WriteElementString("id", app.id.ToString());
-                        writer.WriteElementString("name", app.name);
-                        writer.WriteElementString("creation_datetime", app.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
-                        writer.WriteEndElement(); // fecha o nó <Container>
+                        writer.WriteStartElement("Response"); // personaliza o nó de raiz
+                        foreach (var container in containers)
+                        {
+                            writer.WriteStartElement("Container"); // cada item será representado como um nó <Container> writer.WriteElementString("id", app.id.ToString());
+                            writer.WriteElementString("ID", container.id.ToString());
+                            writer.WriteElementString("name", container.name);
+                            writer.WriteElementString("creation_datetime", container.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
+                            writer.WriteElementString("parent", container.parent.ToString());
+                            writer.WriteEndElement(); // fecha o nó <Container>
+                        }
+                        writer.WriteEndElement(); // fecha o nó de raiz <Containers>
+
                     }
 
                     string xmlContent = responseXml.ToString();
@@ -388,12 +377,36 @@ namespace SOMIOD.Controllers
                     return response;
 
                 }
-                catch (Exception ex)
+                catch (Exception Ex)
                 {
-                    return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+                    response = Request.CreateResponse(HttpStatusCode.InternalServerError, Ex.Message);
+                    return response;
+                }
+            }
+            try
+            {
+                using (var writer = XmlWriter.Create(responseXml, settings))
+                {
+                    writer.WriteStartElement("Application"); // personaliza o nó de raiz writer.WriteStartElement("Application"); // cada item será representado como um nó <Container> writer.WriteElementString("id", app.id.ToString());
+                    writer.WriteElementString("id", app.id.ToString());
+                    writer.WriteElementString("name", app.name);
+                    writer.WriteElementString("creation_datetime", app.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
+                    writer.WriteEndElement(); // fecha o nó <Container>
                 }
 
+                string xmlContent = responseXml.ToString();
+
+                response = Request.CreateResponse(HttpStatusCode.OK, xmlContent);
+                response.Content = new StringContent(xmlContent, Encoding.UTF8, "application/xml");
+                return response;
+
             }
+            catch (Exception ex)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
+            }
+
+        }
 
         //
         // Feito
@@ -512,13 +525,15 @@ namespace SOMIOD.Controllers
                 {
                     connection.Open();
                     string query = "DELETE FROM Application WHERE name = @name";
-                    SqlCommand cmd = new SqlCommand(query, connection);
-                    cmd.Parameters.AddWithValue("@name", application);
-                    int rowsAffected = cmd.ExecuteNonQuery();
-
-                    if (rowsAffected == 0)
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
-                        return Request.CreateResponse(HttpStatusCode.NotFound, "Application not found.");
+                        cmd.Parameters.AddWithValue("@name", application);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected == 0)
+                        {
+                            return Request.CreateResponse(HttpStatusCode.NotFound, "Application not found.");
+                        }
                     }
                 }
 
@@ -562,6 +577,7 @@ namespace SOMIOD.Controllers
             }
 
             string xmlContent = Encoding.UTF8.GetString(bytes);
+
             XmlDocument doc = new XmlDocument();
             try
             {
