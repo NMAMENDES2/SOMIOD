@@ -27,7 +27,9 @@ namespace SOMIOD.Controllers
 
         string connstr = Properties.Settings.Default.ConString;
 
-        // ---------- Talvez meter isto num ficheiro de utils
+        /// <summary>
+        /// verifica se o nome da aplicação já existe na BD
+        /// </summary>
         private bool doesNameExistDB(string name)
         {
             using (SqlConnection conn = new SqlConnection(connstr))
@@ -39,14 +41,16 @@ namespace SOMIOD.Controllers
                     cmd.Parameters.AddWithValue("@name", name);
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        return reader.HasRows;
-
+                        return reader.HasRows;  // se houver registros, retorna true
                     }
                 }
 
             }
         }
 
+        /// <summary>
+        /// retorna o ID da aplicação com base no nome.
+        /// </summary>
         private int getParentID(string name)
         {
             Application app = null;
@@ -67,9 +71,16 @@ namespace SOMIOD.Controllers
                     }
                 }
             }
+            // retorna -1 no caso de não encontrar nenhuma aplicação 
+            if (app == null) {
+                return -1;
+            }
             return app.id;
         }
 
+        /// <summary>
+        /// gera um nome único se o nome fornecido já existir na BD
+        /// </summary>
         private string getUniqueName(string name)
         {
             if (doesNameExistDB(name))
@@ -85,9 +96,9 @@ namespace SOMIOD.Controllers
         // -----------------------------------------------------------------------------
 
         #region CRUD's
-        //
-        // Feito
-        //
+        /// <summary>
+        /// cria uma nova aplicação com base nos dados XML enviados no body do request
+        /// </summary>
         [Route("")]
         [HttpPost]
         public HttpResponseMessage CreateApplication()
@@ -126,6 +137,7 @@ namespace SOMIOD.Controllers
                     return response;
                 }
 
+                // define o nome da aplicação
                 if (nameNode != null && !string.IsNullOrWhiteSpace(nameNode.InnerText))
                 {
                     name = nameNode.InnerText;
@@ -135,12 +147,14 @@ namespace SOMIOD.Controllers
                     name = getUniqueName(Guid.NewGuid().ToString());
                 }
 
+                // validação do res_type
                 if (resNode.InnerText != "application")
                 {
                     response = Request.CreateResponse(HttpStatusCode.BadRequest, "Invalid res_type");
                     return response;
                 }
 
+                // insere o nome da aplicação na BD
                 try
                 {
                     using (SqlConnection conn = new SqlConnection(connstr))
@@ -184,10 +198,9 @@ namespace SOMIOD.Controllers
 
         }
 
-        //
-        // Feito
-        //
-
+        /// <summary>
+        /// retorna todas as aplicações em formato XML
+        /// </summary>
         [Route("")]
         [HttpGet]
         public HttpResponseMessage GetAll()
@@ -246,7 +259,7 @@ namespace SOMIOD.Controllers
 
                 try
                 {
-
+                    // converte os dados em XML
                     using (var writer = XmlWriter.Create(responseXml, settings))
                     {
                         writer.WriteStartElement("Response"); // personaliza o nó de raiz
@@ -279,10 +292,6 @@ namespace SOMIOD.Controllers
             }
         }
 
-        //
-        // Feito
-        //
-
         [Route("{application}")]
         [HttpGet]
         public HttpResponseMessage GetApplication(string application)
@@ -291,7 +300,7 @@ namespace SOMIOD.Controllers
             var settings = new XmlWriterSettings
             {
                 OmitXmlDeclaration = true, // remove a declaração <?xml ... ?>
-                Indent = true
+                Indent = true // formata a saída XML para ser legível
             };
 
             HttpResponseMessage response;
@@ -300,6 +309,7 @@ namespace SOMIOD.Controllers
 
 
             Application app = null;
+            // conexão para procurar a aplicação pelo nome
             using (SqlConnection connection = new SqlConnection(connstr))
             {
                 connection.Open();
@@ -326,6 +336,8 @@ namespace SOMIOD.Controllers
                 response = Request.CreateResponse(HttpStatusCode.NotFound, "Application not found.");
                 return response;
             }
+
+            // verifica se é necessário retornar os containers associados
             if (somiodLocate == "container")
             {
                 var containers = new List<Container>();
@@ -342,6 +354,7 @@ namespace SOMIOD.Controllers
                             {
                                 while (registos.Read())
                                 {
+                                    // preenche a lista de containers
                                     Container container = new Container
                                     {
                                         id = (int)registos["id"],
@@ -354,6 +367,8 @@ namespace SOMIOD.Controllers
                             }
                         }
                     }
+
+                    // gera XML com os dados dos containers
                     using (var writer = XmlWriter.Create(responseXml, settings))
                     {
                         writer.WriteStartElement("Response"); // personaliza o nó de raiz
@@ -370,6 +385,7 @@ namespace SOMIOD.Controllers
 
                     }
 
+                    // retorna a resposta XML que foi formatada
                     string xmlContent = responseXml.ToString();
 
                     response = Request.CreateResponse(HttpStatusCode.OK, xmlContent);
@@ -408,14 +424,13 @@ namespace SOMIOD.Controllers
 
         }
 
-        //
-        // Feito
-        //
-
+        /// <summary>
+        /// método PUT para atualizar o nome de uma aplicacao
+        /// </summary>
 
         [Route("{application}")]
         [HttpPut]
-        public HttpResponseMessage UpdateApplication(string application) // o que é o segundo argumento?
+        public HttpResponseMessage UpdateApplication(string application) 
         {
             HttpResponseMessage response;
             byte[] bytes;
@@ -511,10 +526,9 @@ namespace SOMIOD.Controllers
             }
         }
 
-        //
-        // Feito
-        //
-
+       /// <summary>
+       /// método DELETE para apagar uma aplicacao
+       /// </summary>
         [Route("{application}")]
         [HttpDelete]
         public HttpResponseMessage Delete(string application)
