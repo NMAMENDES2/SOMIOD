@@ -7,10 +7,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Http;
 using System.Xml;
 using System.Xml.Serialization;
+using uPLibrary.Networking.M2Mqtt;
 
 namespace SOMIOD.Controllers
 {
@@ -20,6 +22,52 @@ namespace SOMIOD.Controllers
         string connstr = Properties.Settings.Default.ConString;
 
         #region CRUD's
+
+        private bool isEndpointValid(string endpoint)
+        {
+            string pattern = @"^(?:https?://|mqtt:/)?([\w.-]+)$";
+            Regex regex = new Regex(pattern);
+
+            Match match = regex.Match(endpoint);
+
+            if (match.Success)
+            {
+                string cleanEndpoint = match.Groups[1].Value;
+
+                if (System.Net.IPAddress.TryParse(cleanEndpoint, out _))
+                {
+                    return true; 
+                }
+
+                if (IsValidHostname(cleanEndpoint))
+                {
+                    return true;
+                }
+            }
+
+            return false; 
+        }
+
+
+        // N sei como funciona mas funciona
+        private bool IsValidHostname(string hostname)
+        {
+            string hostnamePattern = @"^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$";
+
+            if (hostname.Length > 253)
+                return false;
+
+            string[] labels = hostname.Split('.');
+            foreach (string label in labels)
+            {
+                if (label.Length > 63 || label.Length == 0 || !Regex.IsMatch(label, @"^[a-zA-Z0-9-]+$") || label.StartsWith("-") || label.EndsWith("-"))
+                {
+                    return false;
+                }
+            }
+
+            return Regex.IsMatch(hostname, hostnamePattern);
+        }
 
         private int getParentID(string name)
         {
@@ -49,7 +97,6 @@ namespace SOMIOD.Controllers
         private bool doesContainerBelongToApplication(string application, string container)
         {
             Application app = null;
-            Container cont = null;
 
             using (SqlConnection conn = new SqlConnection(connstr))
             {
@@ -87,7 +134,6 @@ namespace SOMIOD.Controllers
         private bool doesRecordBelongToContainer(string container, string record)
         {
             Container cont = null;
-            Record rec = null;
 
             using (SqlConnection conn = new SqlConnection(connstr))
             {
@@ -126,7 +172,6 @@ namespace SOMIOD.Controllers
         private bool doesNotificationBelongToContainer(string container, string notification)
         {
             Container cont = null;
-            Notification notif = null;
 
             using (SqlConnection conn = new SqlConnection(connstr))
             {
@@ -205,7 +250,8 @@ namespace SOMIOD.Controllers
                         return reader.HasRows;
 
                     }
-                } }
+                }
+            }
         }
 
 
@@ -217,7 +263,7 @@ namespace SOMIOD.Controllers
         public HttpResponseMessage GetRecord(string application, string container, string record)
         {
             Record rec = null;
-            HttpResponseMessage response; 
+            HttpResponseMessage response;
             var responseXml = new StringWriter();
             var settings = new XmlWriterSettings
             {
@@ -271,32 +317,32 @@ namespace SOMIOD.Controllers
                         return response;
                     }
                     rec = new Record
-                        {
-                            id = (int)reader["id"],
-                            name = reader["name"].ToString(),
-                            parent = (int)reader["parent"],
-                            content = (string)reader["content"],
-                        };
-
-                }
                     {
-                        using (var writer = XmlWriter.Create(responseXml, settings))
-                        {
-                            writer.WriteStartElement("Record"); // personaliza o nó de raiz writer.WriteStartElement("Application"); // cada item será representado como um nó <Container> writer.WriteElementString("id", app.id.ToString());
-                            writer.WriteElementString("id", rec.id.ToString());
-                            writer.WriteElementString("name", rec.name);
-                            writer.WriteElementString("creation_datetime", rec.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
-                            writer.WriteElementString("content", rec.content);
-                            writer.WriteEndElement(); // fecha o nó <Container>
-                        }
+                        id = (int)reader["id"],
+                        name = reader["name"].ToString(),
+                        parent = (int)reader["parent"],
+                        content = (string)reader["content"],
+                    };
 
-                        string xmlContent = responseXml.ToString();
-
-                        response = Request.CreateResponse(HttpStatusCode.OK, xmlContent);
-                        response.Content = new StringContent(xmlContent, Encoding.UTF8, "application/xml");
-                        return response;
-                    }
                 }
+                {
+                    using (var writer = XmlWriter.Create(responseXml, settings))
+                    {
+                        writer.WriteStartElement("Record"); // personaliza o nó de raiz writer.WriteStartElement("Application"); // cada item será representado como um nó <Container> writer.WriteElementString("id", app.id.ToString());
+                        writer.WriteElementString("id", rec.id.ToString());
+                        writer.WriteElementString("name", rec.name);
+                        writer.WriteElementString("creation_datetime", rec.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
+                        writer.WriteElementString("content", rec.content);
+                        writer.WriteEndElement(); // fecha o nó <Container>
+                    }
+
+                    string xmlContent = responseXml.ToString();
+
+                    response = Request.CreateResponse(HttpStatusCode.OK, xmlContent);
+                    response.Content = new StringContent(xmlContent, Encoding.UTF8, "application/xml");
+                    return response;
+                }
+            }
             catch (Exception ex)
             {
                 return Request.CreateErrorResponse(HttpStatusCode.InternalServerError, ex.Message);
@@ -361,16 +407,16 @@ namespace SOMIOD.Controllers
                         response = Request.CreateResponse(HttpStatusCode.BadRequest, "Notification not found");
                         return response;
                     }
-                        notif = new Notification
-                        {
-                            id = (int)reader["id"],
-                            name = reader["name"].ToString(),
-                            parent = (int)reader["parent"],
-                            @event = (int)reader["event"],
-                            endpoint = (string)reader["endpoint"],
-                            enabled = (bool)reader["enabled"],
+                    notif = new Notification
+                    {
+                        id = (int)reader["id"],
+                        name = reader["name"].ToString(),
+                        parent = (int)reader["parent"],
+                        @event = (int)reader["event"],
+                        endpoint = (string)reader["endpoint"],
+                        enabled = (bool)reader["enabled"],
 
-                        };
+                    };
 
                 }
                 {
@@ -407,6 +453,17 @@ namespace SOMIOD.Controllers
         public HttpResponseMessage DeleteRecord(string application, string container, string record)
         {
             HttpResponseMessage response;
+            string[] topics = { container };
+            List<string> endpoints = new List<string>();
+
+            Record rec = new Record();
+
+            var responseXml = new StringWriter();
+            var settings = new XmlWriterSettings
+            {
+                OmitXmlDeclaration = true, // remove a declaração <?xml ... ?>
+                Indent = true
+            };
 
             var isApplication = doesApplicationExist(application);
             if (!isApplication)
@@ -441,6 +498,50 @@ namespace SOMIOD.Controllers
                 using (SqlConnection connection = new SqlConnection(connstr))
                 {
                     connection.Open();
+
+                    string querynotif = "SELECT * FROM Notification";
+                    using (SqlCommand cmdNotif = new SqlCommand(querynotif, connection))
+                    {
+                        SqlDataReader reader = cmdNotif.ExecuteReader();
+                        while (reader.Read())
+                        {
+                            Notification notification = new Notification();
+                            notification.@event = (int)reader["event"];
+                            notification.enabled = (bool)reader["enabled"];
+                            if (notification.@event == 2 && notification.enabled)
+                            {
+                                string endpoint = (string)reader["endpoint"];
+                                if (isEndpointValid(endpoint))
+                                {
+                                    endpoints.Add(endpoint);
+                                }
+                            }
+                        }
+                        reader.Close();
+                    }
+
+
+                    XmlDocument doc = new XmlDocument();
+                    string queryRecord = "SELECT * FROM Record WHERE name = @name";
+                    using (SqlCommand cmdRecord = new SqlCommand(queryRecord, connection))
+                    {
+                        cmdRecord.Parameters.AddWithValue("@name", record.ToLower());
+                        SqlDataReader reader = cmdRecord.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            rec.id = (int)reader["Id"];
+                            rec.name = (string)reader["name"];
+                            rec.content = (string)reader["content"];
+                            rec.creation_datetime = (DateTime)reader["creation_datetime"];
+                        }
+                        else { 
+                            return Request.CreateResponse(HttpStatusCode.NotFound, "Record not found");
+                        }
+
+                        reader.Close();
+
+                    }
+
                     string query = "DELETE FROM Record WHERE name = @name";
                     SqlCommand cmd = new SqlCommand(query, connection);
                     cmd.Parameters.AddWithValue("@name", record);
@@ -451,9 +552,39 @@ namespace SOMIOD.Controllers
                         response = Request.CreateResponse(HttpStatusCode.NotFound, "Record not found");
                         return response;
                     }
-                    response = Request.CreateResponse(HttpStatusCode.OK, "Record deleted");
-                    return response;
                 }
+                using (var writer = XmlWriter.Create(responseXml, settings))
+                {
+                    writer.WriteStartElement("Deleted_Record"); 
+                    writer.WriteElementString("ID", rec.id.ToString());
+                    writer.WriteElementString("name", rec.name);
+                    writer.WriteElementString("creation_datetime", rec.creation_datetime.ToString("yyyy-MM-ddTHH:mm:ss.fff"));
+                    writer.WriteElementString("content", rec.content.ToString());
+
+                    writer.WriteEndElement(); // fecha o nó <Container>
+                }
+
+                string xmlContent = responseXml.ToString();
+
+
+                foreach (string endpoint in endpoints)
+                {
+                    MqttClient mqttClient;
+                    try
+                    {
+                        mqttClient = new MqttClient(endpoint);
+                        mqttClient.Connect(Guid.NewGuid().ToString());
+                        mqttClient.Publish(topics[0], Encoding.UTF8.GetBytes(xmlContent));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
+
+
+                response = Request.CreateResponse(HttpStatusCode.OK, "Record deleted");
+                return response;
             }
             catch (Exception ex)
             {
@@ -467,6 +598,7 @@ namespace SOMIOD.Controllers
         public HttpResponseMessage DeleteNotification(string application, string container, string notification)
         {
             HttpResponseMessage response;
+
 
             var isApplication = doesApplicationExist(application);
             if (!isApplication)

@@ -66,8 +66,6 @@ namespace SOMIOD.Controllers
 
                     return result > 0;
                 }
-
-
             }
 
         }
@@ -91,26 +89,48 @@ namespace SOMIOD.Controllers
             }
         }
 
-        private bool isEndpointValid(string endpoint) {
+        private bool isEndpointValid(string endpoint)
+        {
             string pattern = @"^(?:https?://|mqtt:/)?([\w.-]+)$";
             Regex regex = new Regex(pattern);
 
             Match match = regex.Match(endpoint);
 
-            if (match.Success) {
+            if (match.Success)
+            {
                 string cleanEndpoint = match.Groups[1].Value;
 
-                try
+                if (System.Net.IPAddress.TryParse(cleanEndpoint, out _))
                 {
-                    Dns.GetHostEntry(cleanEndpoint);
                     return true;
                 }
-                catch {
-                    return false;
+
+                if (IsValidHostname(cleanEndpoint))
+                {
+                    return true;
                 }
             }
 
             return false;
+        }
+
+        private bool IsValidHostname(string hostname)
+        {
+            string hostnamePattern = @"^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$";
+
+            if (hostname.Length > 253)
+                return false;
+
+            string[] labels = hostname.Split('.');
+            foreach (string label in labels)
+            {
+                if (label.Length > 63 || label.Length == 0 || !Regex.IsMatch(label, @"^[a-zA-Z0-9-]+$") || label.StartsWith("-") || label.EndsWith("-"))
+                {
+                    return false;
+                }
+            }
+
+            return Regex.IsMatch(hostname, hostnamePattern);
         }
         private string getUniqueName()
         {
@@ -450,8 +470,6 @@ namespace SOMIOD.Controllers
         [HttpDelete]
         public HttpResponseMessage Delete(string application, string container)
         {
-            HttpResponseMessage response;
-            byte[] bytes;
 
             if (!DBTransactions.nameExists(application, "Application"))
             {
@@ -574,7 +592,8 @@ namespace SOMIOD.Controllers
                                 {
                                     Notification notification = new Notification();
                                     notification.@event = (int)reader["event"];
-                                    if (notification.@event == 1) {
+                                    notification.enabled = (bool)reader["enabled"];
+                                    if (notification.@event == 1 && notification.enabled) {
                                         string endpoint = (string)reader["endpoint"];
                                         if (isEndpointValid(endpoint)) { 
                                            endpoints.Add(endpoint);
@@ -652,6 +671,7 @@ namespace SOMIOD.Controllers
                     {
                         enabledNodeValue = enabledNode.InnerText;
                     }
+                    
 
                     if ((eventNode.InnerText != "1" && eventNode.InnerText != "2"))
                     {
