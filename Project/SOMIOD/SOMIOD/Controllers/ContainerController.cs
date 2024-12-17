@@ -16,6 +16,7 @@ using uPLibrary.Networking.M2Mqtt;
 using SOMIOD.Utils;
 using System.Reflection;
 using System.Xml.Linq;
+using System.Diagnostics.Eventing.Reader;
 
 namespace SOMIOD.Controllers
 {
@@ -66,8 +67,6 @@ namespace SOMIOD.Controllers
 
                     return result > 0;
                 }
-
-
             }
 
         }
@@ -574,7 +573,9 @@ namespace SOMIOD.Controllers
                                 {
                                     Notification notification = new Notification();
                                     notification.@event = (int)reader["event"];
-                                    if (notification.@event == 1) {
+                                    notification.enabled = (bool)reader["enabled"];
+                                    if (notification.@event == 1 && notification.enabled)
+                                    {
                                         string endpoint = (string)reader["endpoint"];
                                         if (isEndpointValid(endpoint)) { 
                                            endpoints.Add(endpoint);
@@ -631,8 +632,8 @@ namespace SOMIOD.Controllers
                     XmlNode endPointNode = doc.SelectSingleNode("/request/endpoint");
                     XmlNode eventNode = doc.SelectSingleNode("/request/event");
                     XmlNode enabledNode = doc.SelectSingleNode("/request/enabled");
-                    var enabledNodeValue = "";
                     var endpoint = endPointNode.InnerText;
+                    var enableNodeText = "";
 
                     if (endPointNode == null)
                     {
@@ -644,14 +645,19 @@ namespace SOMIOD.Controllers
                         return Request.CreateResponse(HttpStatusCode.BadRequest, "Expecting event");
                     }
 
-                    if (enabledNode == null)
+                    if (enabledNode == null || enabledNode.InnerText.ToUpper() == "TRUE")
                     {
-                        enabledNodeValue = "true";
+                        enableNodeText = "True";
+                    }
+                    else if (enabledNode.InnerText.ToUpper() == "FALSE")
+                    {
+                        enableNodeText = "False";
                     }
                     else
                     {
-                        enabledNodeValue = enabledNode.InnerText;
+                        return Request.CreateResponse(HttpStatusCode.BadRequest, "Bad enabled value");
                     }
+                    
 
                     if ((eventNode.InnerText != "1" && eventNode.InnerText != "2"))
                     {
@@ -671,7 +677,7 @@ namespace SOMIOD.Controllers
                                 cmd.Parameters.AddWithValue("@parent", getParentID(container));
                                 cmd.Parameters.AddWithValue("@endpoint", endPointNode.InnerText);
                                 cmd.Parameters.AddWithValue("@event", Convert.ToInt32(eventNode.InnerText));
-                                cmd.Parameters.AddWithValue("@enabled", enabledNodeValue);
+                                cmd.Parameters.AddWithValue("@enabled", enableNodeText);
                                 int rows = cmd.ExecuteNonQuery();
                                 if (rows > 0)
                                 {
