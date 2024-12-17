@@ -136,3 +136,6 @@ E:\Faculdade\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.csproj.CoreCompileInp
 E:\Faculdade\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.csproj.Up2Date
 E:\Faculdade\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.dll
 E:\Faculdade\SOMIOD\Project\SOMIOD\SOMIOD\obj\Debug\SOMIOD.pdb
+C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\bin\Microsoft.Web.Infrastructure.dll
+C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\bin\Swashbuckle.Core.dll
+C:\Users\rosa8\Documents\Uni\IS\SOMIOD\Project\SOMIOD\SOMIOD\bin\WebActivatorEx.dll

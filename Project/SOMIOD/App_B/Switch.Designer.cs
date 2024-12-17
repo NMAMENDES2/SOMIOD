@@ -66,7 +66,7 @@
             this.Controls.Add(this.buttonOff);
             this.Controls.Add(this.buttonON);
             this.Name = "App_B";
-            this.Text = "App_B";
+            this.Text = "App B";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.App_B_FormClosing);
             this.Load += new System.EventHandler(this.App_B_Load);
             this.ResumeLayout(false);
